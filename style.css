@@ -1,7 +1,6 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
-  background: #fff;
 }
 
 .header {
@@ -20,21 +19,17 @@ body {
 }
 
 .ticker {
-  display: flex;
-  justify-content: space-between;
   padding: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   border-radius: 8px;
   cursor: pointer;
+  background: #fafafa;
 }
 
 .ticker.active {
   background: #f1f5ff;
   font-weight: 600;
 }
-
-.pos { color: #1a9c5d; }
-.neg { color: #d93025; }
 
 .content {
   flex: 1;
@@ -50,12 +45,36 @@ body {
 .price {
   font-size: 36px;
   font-weight: 700;
-  margin: 10px 0;
+}
+
+.change {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.change.pos { color: #1a9c5d; }
+.change.neg { color: #d93025; }
+
+.ranges {
+  margin: 15px 0;
+}
+
+.ranges button {
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.ranges button.active {
+  background: #1f4fd8;
+  color: white;
+  border-radius: 6px;
 }
 
 .chart-wrapper {
   height: 320px;
-  background: #fff;
+  background: white;
   border-radius: 14px;
   padding: 12px;
 }
