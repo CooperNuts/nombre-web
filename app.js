@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const chart = new Chart(ctx, {
     type: 'line',
-    data: { labels: [], datasets: [{ data: [], borderColor: '#1f4fd8', backgroundColor: gradient, tension: 0.4, fill: true, pointRadius: 0 }] },
+    data: { labels: [], datasets: [{ data: [], borderColor: '#0b3ea8', backgroundColor: gradient, borderWidth: 1.5, tension: 0.35, fill: true, pointRadius: 0, pointHoverRadius: 0 }] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
