@@ -4,50 +4,54 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pistachio Market Insights</title>
+
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 </head>
 
 <body>
-  <header class="header">
-    <h1>Pistachio Market Insights</h1>
-  </header>
 
-  <main class="layout">
+<header class="header">
+  <h1>Pistachio Market Insights</h1>
+</header>
 
-    <aside class="sidebar">
-      <div class="ticker active" data-pair="USDLB_STD">
-        <span>Std. Size USX1, USDLB FAS California</span>
-        <span class="pos">+1.24%</span>
+<main class="layout">
+
+  <!-- 🔹 SIDEBAR -->
+  <aside class="sidebar">
+    <div class="ticker active" data-pair="USDLB_STD" data-name="Std. Size USX1, USDLB FAS California"></div>
+    <div class="ticker" data-pair="USDLB_LARGE" data-name="Large Size USX1, USDLB FAS California"></div>
+    <div class="ticker" data-pair="USDLB_KERNEL" data-name="Kernel W80 USX1, USDLB FAS California"></div>
+  </aside>
+
+  <!-- 🔹 CONTENT -->
+  <section class="content">
+    <div class="card">
+
+      <h2 id="productTitle"></h2>
+      <div class="price" id="productPrice"></div>
+      <div class="change" id="productChange"></div>
+
+      <!-- 🔹 RANGE SELECTOR -->
+      <div class="ranges">
+        <button data-range="7">7D</button>
+        <button data-range="30">1M</button>
+        <button data-range="90">3M</button>
+        <button data-range="365">1Y</button>
+        <button data-range="all" class="active">ALL</button>
       </div>
 
-      <div class="ticker" data-pair="USDLB_LARGE">
-        <span>Large Size USX1, USDLB FAS California</span>
-        <span class="neg">-0.56%</span>
+      <div class="chart-wrapper">
+        <canvas id="currencyChart"></canvas>
       </div>
 
-      <div class="ticker" data-pair="USDLB_KERNEL">
-        <span>Kernel W80 USX1, USDLB FAS California</span>
-        <span class="pos">+0.89%</span>
-      </div>
-    </aside>
+    </div>
+  </section>
 
-    <section class="content">
-      <div class="card">
-        <h2 id="productTitle">Std. Size USX1, USDLB FAS California</h2>
-        <div class="price" id="productPrice">$4.15</div>
-        <p class="meta">Actualizado hace 2 minutos</p>
+</main>
 
-        <div class="chart-wrapper">
-          <canvas id="currencyChart"></canvas>
-        </div>
-      </div>
-    </section>
+<footer class="footer">© 2025 · (c) COOPER NUTS, S.L.</footer>
 
-  </main>
-
-  <footer class="footer">© 2025 · (c) COOPER NUTS, S.L.</footer>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
