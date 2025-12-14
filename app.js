@@ -24,16 +24,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  async function loadData() {
+  async function loadChartData() {
 
     let rangeFilter = '';
     if (currentRange !== 'all') {
-      rangeFilter = `&rate_date=gte.${new Date(Date.now() - currentRange * 86400000).toISOString().split('T')[0]}`;
+      const fromDate = new Date(Date.now() - currentRange * 86400000)
+        .toISOString().split('T')[0];
+      rangeFilter = `&rate_date=gte.${fromDate}`;
     }
 
     const url = `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${currentPair}${rangeFilter}&order=rate_date.asc`;
 
-    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
     const data = await res.json();
     if (!data.length) return;
 
@@ -51,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.options.scales.y.max = max + pad;
     chart.update();
 
-    // 🔹 Precio y % diario
     const last = values.at(-1);
     const prev = values.at(-2) ?? last;
     const change = ((last - prev) / prev) * 100;
@@ -63,31 +70,53 @@ document.addEventListener('DOMContentLoaded', () => {
     changeEl.className = `change ${change >= 0 ? 'pos' : 'neg'}`;
   }
 
-  // 🔹 Productos
-  document.querySelectorAll('.ticker').forEach(item => {
-    item.textContent = item.dataset.name;
-    item.addEventListener('click', () => {
-      document.querySelectorAll('.ticker').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      currentPair = item.dataset.pair;
-      document.getElementById('productTitle').textContent = item.dataset.name;
-      loadData();
+  async function loadSidebarChanges() {
+    document.querySelectorAll('.ticker').forEach(async ticker => {
+      ticker.querySelector('.label').textContent = ticker.dataset.name;
+
+      const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${ticker.dataset.pair}&order=rate_date.desc&limit=2`;
+
+      const res = await fetch(url, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      });
+
+      const data = await res.json();
+      if (data.length < 2) return;
+
+      const change = ((data[0].value - data[1].value) / data[1].value) * 100;
+      const deltaEl = ticker.querySelector('.delta');
+
+      deltaEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+      deltaEl.className = `delta ${change >= 0 ? 'pos' : 'neg'}`;
+    });
+  }
+
+  document.querySelectorAll('.ticker').forEach(ticker => {
+    ticker.addEventListener('click', () => {
+      document.querySelectorAll('.ticker').forEach(t => t.classList.remove('active'));
+      ticker.classList.add('active');
+
+      currentPair = ticker.dataset.pair;
+      document.getElementById('productTitle').textContent = ticker.dataset.name;
+      loadChartData();
     });
   });
 
-  // 🔹 Rangos
   document.querySelectorAll('.ranges button').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.ranges button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentRange = btn.dataset.range;
-      loadData();
+      loadChartData();
     });
   });
 
-  // 🔹 Inicial
   document.getElementById('productTitle').textContent =
     document.querySelector('.ticker.active').dataset.name;
 
-  loadData();
+  loadSidebarChanges();
+  loadChartData();
 });
