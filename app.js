@@ -1,8 +1,8 @@
 // Archivo preparado para futuras integraciones con APIs financieras
 console.log("Web de cotizaciones cargada correctamente");
-const ctx = document.getElementById('currencyChart').getContext('2d');
 
-const ctx = document.getElementById('currencyChart').getContext('2d');
+const canvas = document.getElementById('currencyChart');
+const ctx = canvas.getContext('2d');
 
 const chart = new Chart(ctx, {
   type: 'line',
@@ -20,8 +20,8 @@ const chart = new Chart(ctx, {
   options: {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } }
+    plugins: {
+      legend: { display: false }
+    }
   }
 });
-
-// luego tu fetch a Supabase y chart.update()
