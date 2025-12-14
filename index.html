@@ -15,16 +15,25 @@
   <h1>Pistachio Market Insights</h1>
 </header>
 
-<main class="layout">
+<main>
 
-  <!-- 🔹 SIDEBAR -->
   <aside class="sidebar">
-    <div class="ticker active" data-pair="USDLB_STD" data-name="Std. Size USX1, USDLB FAS California"></div>
-    <div class="ticker" data-pair="USDLB_LARGE" data-name="Large Size USX1, USDLB FAS California"></div>
-    <div class="ticker" data-pair="USDLB_KERNEL" data-name="Kernel W80 USX1, USDLB FAS California"></div>
+    <div class="ticker active" data-pair="USDLB_STD" data-name="Std. Size USX1, USDLB FAS California">
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
+    <div class="ticker" data-pair="USDLB_LARGE" data-name="Large Size USX1, USDLB FAS California">
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
+    <div class="ticker" data-pair="USDLB_KERNEL" data-name="Kernel W80 USX1, USDLB FAS California">
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
   </aside>
 
-  <!-- 🔹 CONTENT -->
   <section class="content">
     <div class="card">
 
@@ -32,7 +41,6 @@
       <div class="price" id="productPrice"></div>
       <div class="change" id="productChange"></div>
 
-      <!-- 🔹 RANGE SELECTOR -->
       <div class="ranges">
         <button data-range="7">7D</button>
         <button data-range="30">1M</button>
@@ -50,7 +58,7 @@
 
 </main>
 
-        <footer class="footer">© 2025 · (c) COOPER NUTS, S.L.</footer>
+<footer class="footer">© 2025 · (c) COOPER NUTS, S.L.</footer>
 
 <script src="app.js"></script>
 </body>
