@@ -79,9 +79,9 @@ body {
   padding: 12px;
 }
 .footer {
-  margin-top: 80px;        /* 🔹 separa del gráfico */
-  padding: 30px 0 40px;    /* 🔹 aire vertical */
-  text-align: center;      /* 🔹 centrado */
-  font-size: 13px;         /* 🔹 más pequeño */
-  color: #9aa0a6;          /* 🔹 gris elegante */
+  margin-top: 80px;
+  padding: 30px 0 40px;
+  text-align: center;
+  font-size: 13px;
+  color: #9aa0a6;
 }
