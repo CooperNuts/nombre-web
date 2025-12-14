@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+  console.log("Web de cotizaciones cargada correctamente");
+
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
@@ -52,28 +54,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = await res.json();
     if (!data.length) return;
 
-    chart.data.labels = data.map(d => d.rate_date);
-    chart.data.datasets[0].data = data.map(d => Number(d.value));
+    const labels = data.map(d => d.rate_date);
+    const values = data.map(d => Number(d.value));
 
-    const values = chart.data.datasets[0].data;
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = values;
+
+    // 🔵 AUTO-SCALE REAL (CLAVE)
     const min = Math.min(...values);
     const max = Math.max(...values);
-    const pad = (max - min) * 0.1 || 0.05;
+    const padding = (max - min) * 0.15 || 0.1;
 
-    chart.options.scales.y.min = min - pad;
-    chart.options.scales.y.max = max + pad;
+    chart.options.scales.y.min = min - padding;
+    chart.options.scales.y.max = max + padding;
 
     chart.update();
   }
 
-  // 🔹 Click en el menú
+  // 🔹 Menú izquierdo
   document.querySelectorAll('.ticker').forEach(item => {
     item.addEventListener('click', () => {
       document.querySelectorAll('.ticker').forEach(i => i.classList.remove('active'));
       item.classList.add('active');
-
-      const pair = item.dataset.pair;
-      loadChart(pair);
+      loadChart(item.dataset.pair);
     });
   });
 
