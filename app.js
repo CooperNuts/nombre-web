@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const ctx = canvas.getContext('2d');
 
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, 'rgba(31,79,216,0.18)');
-  gradient.addColorStop(1, 'rgba(31,79,216,0)');
+  gradient.addColorStop(0, 'rgba(11,62,168,0.18)');
+  gradient.addColorStop(1, 'rgba(11,62,168,0)');
 
   const chart = new Chart(ctx, {
     type: 'line',
