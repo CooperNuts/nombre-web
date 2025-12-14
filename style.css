@@ -1,21 +1,37 @@
+/* RESET BÁSICO */
+* {
+  box-sizing: border-box;
+}
+
+/* ESTRUCTURA GENERAL */
 body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
 }
 
+/* HEADER */
 .header {
-  padding: 20px;
+  padding: 20px 30px;
   border-bottom: 1px solid #eee;
 }
 
-.layout {
+/* MAIN LAYOUT */
+main {
+  flex: 1;
   display: flex;
 }
 
+/* SIDEBAR */
 .sidebar {
   width: 280px;
   border-right: 1px solid #eee;
   padding: 20px;
+  background: #fafafa;
 }
 
 .ticker {
@@ -23,7 +39,12 @@ body {
   margin-bottom: 10px;
   border-radius: 8px;
   cursor: pointer;
-  background: #fafafa;
+  background: #ffffff;
+  transition: background 0.2s;
+}
+
+.ticker:hover {
+  background: #f1f5ff;
 }
 
 .ticker.active {
@@ -31,32 +52,43 @@ body {
   font-weight: 600;
 }
 
+/* CONTENIDO PRINCIPAL */
 .content {
   flex: 1;
   padding: 30px;
 }
 
+/* TARJETA */
 .card {
   background: #f6f7f9;
   border-radius: 20px;
   padding: 30px;
 }
 
+/* PRECIO */
 .price {
   font-size: 36px;
   font-weight: 700;
+  margin: 10px 0 5px;
 }
 
+/* VARIACIÓN */
 .change {
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
-.change.pos { color: #1a9c5d; }
-.change.neg { color: #d93025; }
+.change.pos {
+  color: #1a9c5d;
+}
 
+.change.neg {
+  color: #d93025;
+}
+
+/* SELECTOR DE RANGOS */
 .ranges {
-  margin: 15px 0;
+  margin-bottom: 15px;
 }
 
 .ranges button {
@@ -64,23 +96,26 @@ body {
   background: transparent;
   padding: 6px 10px;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .ranges button.active {
   background: #1f4fd8;
-  color: white;
+  color: #ffffff;
   border-radius: 6px;
 }
 
+/* GRÁFICO */
 .chart-wrapper {
   height: 320px;
-  background: white;
+  background: #ffffff;
   border-radius: 14px;
   padding: 12px;
 }
+
+/* FOOTER */
 .footer {
-  margin-top: 80px;
-  padding: 30px 0 40px;
+  padding: 25px 0 30px;
   text-align: center;
   font-size: 13px;
   color: #9aa0a6;
