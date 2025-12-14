@@ -106,17 +106,14 @@ body {
     border-bottom: 1px solid var(--border);
   }
 }
-canvas {
-  width: 100% !important;
-  height: 300px !important;
-}
-.chart-container {
+.chart {
   width: 100%;
   height: 320px;
 }
 
-canvas {
+.chart canvas {
   width: 100% !important;
   height: 100% !important;
+}
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
 }
