@@ -106,3 +106,7 @@ body {
     border-bottom: 1px solid var(--border);
   }
 }
+canvas {
+  width: 100% !important;
+  height: 300px !important;
+}
