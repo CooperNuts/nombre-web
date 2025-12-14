@@ -5,53 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pistachio Market Insights</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 </head>
 
 <body>
-
   <header class="header">
     <h1>Pistachio Market Insights</h1>
   </header>
 
   <main class="layout">
+
     <aside class="sidebar">
-  <div class="ticker active" data-pair="USDLB_STD">
-    <span>Std. Size USX1, USDLB FAS California</span>
-    <span class="pos">+1.24%</span>
-  </div>
+      <div class="ticker active" data-pair="USDLB_STD">
+        <span>Std. Size USX1, USDLB FAS California</span>
+        <span class="pos">+1.24%</span>
+      </div>
 
-  <div class="ticker" data-pair="USDLB_LARGE">
-    <span>Large Size USX1, USDLB FAS California</span>
-    <span class="neg">-0.56%</span>
-  </div>
+      <div class="ticker" data-pair="USDLB_LARGE">
+        <span>Large Size USX1, USDLB FAS California</span>
+        <span class="neg">-0.56%</span>
+      </div>
 
-  <div class="ticker" data-pair="USDLB_KERNEL">
-    <span>Kernel W80 USX1, USDLB FAS California</span>
-    <span class="pos">+0.89%</span>
-  </div>
-</aside>
-
+      <div class="ticker" data-pair="USDLB_KERNEL">
+        <span>Kernel W80 USX1, USDLB FAS California</span>
+        <span class="pos">+0.89%</span>
+      </div>
+    </aside>
 
     <section class="content">
       <div class="card">
-        <h2>Std. Size USX1, USDLB FAS California</h2>
-        <div class="price">$4.15</div>
+        <h2 id="productTitle">Std. Size USX1, USDLB FAS California</h2>
+        <div class="price" id="productPrice">$4.15</div>
         <p class="meta">Actualizado hace 2 minutos</p>
 
-        <div class="chart">
+        <div class="chart-wrapper">
           <canvas id="currencyChart"></canvas>
         </div>
       </div>
     </section>
+
   </main>
 
-  <footer class="footer">
-    © 2025 · (c) COOPER NUTS, S.L.
-  </footer>
+  <footer class="footer">© 2025 · (c) COOPER NUTS, S.L.</footer>
 
-  <!-- SCRIPTS SIEMPRE AL FINAL -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
   <script src="app.js"></script>
-
 </body>
 </html>
