@@ -117,3 +117,13 @@ body {
 }
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
 }
+.ticker {
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.ticker.active {
+  background: #f1f5ff;
+  font-weight: 600;
+}
