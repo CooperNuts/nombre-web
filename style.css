@@ -78,3 +78,10 @@ body {
   border-radius: 14px;
   padding: 12px;
 }
+.footer {
+  margin-top: 80px;        /* 🔹 separa del gráfico */
+  padding: 30px 0 40px;    /* 🔹 aire vertical */
+  text-align: center;      /* 🔹 centrado */
+  font-size: 13px;         /* 🔹 más pequeño */
+  color: #9aa0a6;          /* 🔹 gris elegante */
+}
