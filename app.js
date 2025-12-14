@@ -1,7 +1,7 @@
 console.log("Web de cotizaciones cargada correctamente");
 
-const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
-const SUPABASE_KEY = 'TU_PUBLIC_ANON_KEY';
+const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
 const canvas = document.getElementById('currencyChart');
 const ctx = canvas.getContext('2d');
