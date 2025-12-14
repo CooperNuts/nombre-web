@@ -1,9 +1,7 @@
-/* RESET BÁSICO */
 * {
   box-sizing: border-box;
 }
 
-/* ESTRUCTURA GENERAL */
 body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
@@ -11,7 +9,6 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
 }
 
 /* HEADER */
@@ -20,7 +17,7 @@ body {
   border-bottom: 1px solid #eee;
 }
 
-/* MAIN LAYOUT */
+/* MAIN */
 main {
   flex: 1;
   display: flex;
@@ -29,22 +26,20 @@ main {
 /* SIDEBAR */
 .sidebar {
   width: 280px;
-  border-right: 1px solid #eee;
   padding: 20px;
+  border-right: 1px solid #eee;
   background: #fafafa;
 }
 
 .ticker {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 12px;
   margin-bottom: 10px;
+  background: #ffffff;
   border-radius: 8px;
   cursor: pointer;
-  background: #ffffff;
-  transition: background 0.2s;
-}
-
-.ticker:hover {
-  background: #f1f5ff;
 }
 
 .ticker.active {
@@ -52,41 +47,46 @@ main {
   font-weight: 600;
 }
 
-/* CONTENIDO PRINCIPAL */
+.label {
+  max-width: 75%;
+  font-size: 14px;
+}
+
+.delta {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ⚠️ COLORES INVERTIDOS COMO PEDISTE */
+.delta.pos { color: #d93025; } /* positivo = rojo */
+.delta.neg { color: #1a9c5d; } /* negativo = verde */
+
+/* CONTENT */
 .content {
   flex: 1;
   padding: 30px;
 }
 
-/* TARJETA */
 .card {
   background: #f6f7f9;
   border-radius: 20px;
   padding: 30px;
 }
 
-/* PRECIO */
 .price {
   font-size: 36px;
   font-weight: 700;
-  margin: 10px 0 5px;
 }
 
-/* VARIACIÓN */
 .change {
   font-weight: 600;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
-.change.pos {
-  color: #1a9c5d;
-}
+.change.pos { color: #d93025; }
+.change.neg { color: #1a9c5d; }
 
-.change.neg {
-  color: #d93025;
-}
-
-/* SELECTOR DE RANGOS */
+/* RANGE SELECTOR */
 .ranges {
   margin-bottom: 15px;
 }
@@ -96,16 +96,15 @@ main {
   background: transparent;
   padding: 6px 10px;
   cursor: pointer;
-  font-size: 14px;
 }
 
 .ranges button.active {
   background: #1f4fd8;
-  color: #ffffff;
+  color: white;
   border-radius: 6px;
 }
 
-/* GRÁFICO */
+/* CHART */
 .chart-wrapper {
   height: 320px;
   background: #ffffff;
