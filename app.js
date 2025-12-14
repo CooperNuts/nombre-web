@@ -7,13 +7,16 @@ const chart = new Chart(ctx, {
   data: {
     labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
     datasets: [{
-      label: 'EUR/USD',
+      label: 'Std. Size, USX1, USDLB, FAS California',
       data: [1.09, 1.092, 1.095, 1.093, 1.097, 1.099, 1.101],
-      borderColor: '#2bb673',
-      backgroundColor: 'rgba(43, 182, 115, 0.1)',
-      tension: 0.4,
+      borderColor: '#1f4fd8',                 // Azul XE
+      backgroundColor: 'rgba(31, 79, 216, 0.12)',
+      borderWidth: 2,
+      tension: 0.45,
       fill: true,
-      pointRadius: 0
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      pointHoverBackgroundColor: '#1f4fd8'
     }]
   },
   options: {
