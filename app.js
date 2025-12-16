@@ -10,12 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const ctx = canvas.getContext('2d');
 
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, 'rgba(42,47,58,0.15)');
-  gradient.addColorStop(1, 'rgba(42,47,58,0)');
+  gradient.addColorStop(0, 'rgba(18,21,28,0.12)');
+  gradient.addColorStop(1, 'rgba(18,21,28,0)');
 
   const chart = new Chart(ctx, {
     type: 'line',
-    data: { labels: [], datasets: [{ data: [], borderColor: '#2a2f3a', backgroundColor: gradient, borderWidth: 0.75, tension: 0.3, fill: true, pointRadius: 0, pointHoverRadius: 0 }] },
+    data: { labels: [], datasets: [{ data: [], borderColor: '#12151c', backgroundColor: gradient, borderWidth: 0.6, tension: 0.28, fill: true, pointRadius: 0, pointHoverRadius: 0 }] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
