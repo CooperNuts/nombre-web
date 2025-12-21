@@ -1,11 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+  /* =========================
+     CONFIGURACIÓN SUPABASE
+  ========================== */
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
   let currentPair = 'USDLB_STD';
   let currentRange = 'all';
 
+  /* =========================
+     CHART.JS SETUP
+  ========================== */
   const canvas = document.getElementById('currencyChart');
   const ctx = canvas.getContext('2d');
 
@@ -15,21 +21,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const chart = new Chart(ctx, {
     type: 'line',
-    data: { labels: [], datasets: [{ data: [], borderColor: '#12151c', backgroundColor: gradient, borderWidth: 0.6, tension: 0.28, fill: true, pointRadius: 0, pointHoverRadius: 0 }] },
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        borderColor: '#12151c',     // casi negro
+        backgroundColor: gradient,
+        borderWidth: 0.6,           // línea ultrafina
+        tension: 0.28,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 3
+      }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { grid: { display: false } }, y: { position: 'right' } }
+
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+
+      plugins: {
+        legend: { display: false },
+
+        tooltip: {
+          enabled: true,
+          backgroundColor: '#12151c',
+          titleColor: '#ffffff',
+          bodyColor: '#ffffff',
+          padding: 10,
+          displayColors: false,
+          callbacks: {
+            title: (items) => {
+              const d = new Date(items[0].label);
+              return d.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              });
+            },
+            label: (ctx) => `$${ctx.parsed.y.toFixed(2)}`
+          }
+        }
+      },
+
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          position: 'right',
+          grid: { color: '#eee' },
+          ticks: {
+            callback: v => `$${v.toFixed(2)}`
+          }
+        }
+      }
     }
   });
 
+  /* =========================
+     CARGA DE DATOS DEL GRÁFICO
+  ========================== */
   async function loadChartData() {
 
     let rangeFilter = '';
     if (currentRange !== 'all') {
       const fromDate = new Date(Date.now() - currentRange * 86400000)
-        .toISOString().split('T')[0];
+        .toISOString()
+        .split('T')[0];
       rangeFilter = `&rate_date=gte.${fromDate}`;
     }
 
@@ -51,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
 
+    // Auto-scale estilo XE
     const min = Math.min(...values);
     const max = Math.max(...values);
     const pad = (max - min) * 0.15 || 0.1;
@@ -59,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.options.scales.y.max = max + pad;
     chart.update();
 
+    // Precio grande + % diario
     const last = values.at(-1);
     const prev = values.at(-2) ?? last;
     const change = ((last - prev) / prev) * 100;
@@ -70,8 +132,12 @@ document.addEventListener('DOMContentLoaded', () => {
     changeEl.className = `change ${change >= 0 ? 'pos' : 'neg'}`;
   }
 
+  /* =========================
+     % DIARIO EN SIDEBAR
+  ========================== */
   async function loadSidebarChanges() {
     document.querySelectorAll('.ticker').forEach(async ticker => {
+
       ticker.querySelector('.label').textContent = ticker.dataset.name;
 
       const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${ticker.dataset.pair}&order=rate_date.desc&limit=2`;
@@ -89,11 +155,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const change = ((data[0].value - data[1].value) / data[1].value) * 100;
       const deltaEl = ticker.querySelector('.delta');
 
+      // ⚠️ Colores invertidos como pediste
       deltaEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
       deltaEl.className = `delta ${change >= 0 ? 'pos' : 'neg'}`;
     });
   }
 
+  /* =========================
+     EVENTOS
+  ========================== */
   document.querySelectorAll('.ticker').forEach(ticker => {
     ticker.addEventListener('click', () => {
       document.querySelectorAll('.ticker').forEach(t => t.classList.remove('active'));
@@ -101,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       currentPair = ticker.dataset.pair;
       document.getElementById('productTitle').textContent = ticker.dataset.name;
+
       loadChartData();
     });
   });
@@ -109,11 +180,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.ranges button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+
       currentRange = btn.dataset.range;
       loadChartData();
     });
   });
 
+  /* =========================
+     INICIALIZACIÓN
+  ========================== */
   document.getElementById('productTitle').textContent =
     document.querySelector('.ticker.active').dataset.name;
 
