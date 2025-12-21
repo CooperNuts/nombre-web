@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
-  let currentPair = 'USDLB_STD';
+  let primaryPair = 'USDLB_STD';
+  let comparePair = null;
   let currentRange = 'all';
 
   /* =========================
@@ -15,24 +16,43 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('currencyChart');
   const ctx = canvas.getContext('2d');
 
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, 'rgba(18,21,28,0.12)');
-  gradient.addColorStop(1, 'rgba(18,21,28,0)');
+  const gradientPrimary = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradientPrimary.addColorStop(0, 'rgba(18,21,28,0.12)');
+  gradientPrimary.addColorStop(1, 'rgba(18,21,28,0)');
+
+  const gradientCompare = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradientCompare.addColorStop(0, 'rgba(120,124,135,0.10)');
+  gradientCompare.addColorStop(1, 'rgba(120,124,135,0)');
 
   const chart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: [],
-      datasets: [{
-        data: [],
-        borderColor: '#12151c',     // casi negro
-        backgroundColor: gradient,
-        borderWidth: 0.6,           // línea ultrafina
-        tension: 0.28,
-        fill: true,
-        pointRadius: 0,
-        pointHoverRadius: 3
-      }]
+      datasets: [
+        {
+          label: 'Principal',
+          data: [],
+          borderColor: '#12151c',
+          backgroundColor: gradientPrimary,
+          borderWidth: 0.6,
+          tension: 0.28,
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 3
+        },
+        {
+          label: 'Comparación',
+          data: [],
+          borderColor: '#7a7f8a',
+          backgroundColor: gradientCompare,
+          borderWidth: 0.6,
+          tension: 0.28,
+          fill: false,
+          pointRadius: 0,
+          pointHoverRadius: 3,
+          hidden: true
+        }
+      ]
     },
     options: {
       responsive: true,
@@ -47,14 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
         legend: { display: false },
 
         tooltip: {
-          enabled: true,
           backgroundColor: '#12151c',
-          titleColor: '#ffffff',
-          bodyColor: '#ffffff',
-          padding: 10,
+          titleColor: '#fff',
+          bodyColor: '#fff',
           displayColors: false,
           callbacks: {
-            title: (items) => {
+            title: items => {
               const d = new Date(items[0].label);
               return d.toLocaleDateString('es-ES', {
                 day: '2-digit',
@@ -62,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 year: 'numeric'
               });
             },
-            label: (ctx) => `$${ctx.parsed.y.toFixed(2)}`
+            label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`
           }
         }
       },
@@ -72,28 +90,25 @@ document.addEventListener('DOMContentLoaded', () => {
         y: {
           position: 'right',
           grid: { color: '#eee' },
-          ticks: {
-            callback: v => `$${v.toFixed(2)}`
-          }
+          ticks: { callback: v => `$${v.toFixed(2)}` }
         }
       }
     }
   });
 
   /* =========================
-     CARGA DE DATOS DEL GRÁFICO
+     FETCH DATOS
   ========================== */
-  async function loadChartData() {
+  async function fetchSeries(pair) {
 
     let rangeFilter = '';
     if (currentRange !== 'all') {
       const fromDate = new Date(Date.now() - currentRange * 86400000)
-        .toISOString()
-        .split('T')[0];
+        .toISOString().split('T')[0];
       rangeFilter = `&rate_date=gte.${fromDate}`;
     }
 
-    const url = `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${currentPair}${rangeFilter}&order=rate_date.asc`;
+    const url = `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${rangeFilter}&order=rate_date.asc`;
 
     const res = await fetch(url, {
       headers: {
@@ -102,96 +117,90 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    const data = await res.json();
-    if (!data.length) return;
+    return await res.json();
+  }
 
-    const labels = data.map(d => d.rate_date);
-    const values = data.map(d => Number(d.value));
+  /* =========================
+     ACTUALIZAR GRÁFICO
+  ========================== */
+  async function updateChart() {
+
+    const primaryData = await fetchSeries(primaryPair);
+    if (!primaryData.length) return;
+
+    const labels = primaryData.map(d => d.rate_date);
+    const primaryValues = primaryData.map(d => Number(d.value));
 
     chart.data.labels = labels;
-    chart.data.datasets[0].data = values;
+    chart.data.datasets[0].data = primaryValues;
 
-    // Auto-scale estilo XE
-    const min = Math.min(...values);
-    const max = Math.max(...values);
+    let allValues = [...primaryValues];
+
+    if (comparePair) {
+      const compareData = await fetchSeries(comparePair);
+      const map = Object.fromEntries(compareData.map(d => [d.rate_date, Number(d.value)]));
+      const compareValues = labels.map(l => map[l] ?? null);
+
+      chart.data.datasets[1].data = compareValues;
+      chart.data.datasets[1].hidden = false;
+
+      allValues = allValues.concat(compareValues.filter(v => v !== null));
+    } else {
+      chart.data.datasets[1].hidden = true;
+    }
+
+    const min = Math.min(...allValues);
+    const max = Math.max(...allValues);
     const pad = (max - min) * 0.15 || 0.1;
 
     chart.options.scales.y.min = min - pad;
     chart.options.scales.y.max = max + pad;
     chart.update();
-
-    // Precio grande + % diario
-    const last = values.at(-1);
-    const prev = values.at(-2) ?? last;
-    const change = ((last - prev) / prev) * 100;
-
-    document.getElementById('productPrice').textContent = `$${last.toFixed(2)}`;
-
-    const changeEl = document.getElementById('productChange');
-    changeEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-    changeEl.className = `change ${change >= 0 ? 'pos' : 'neg'}`;
   }
 
   /* =========================
-     % DIARIO EN SIDEBAR
-  ========================== */
-  async function loadSidebarChanges() {
-    document.querySelectorAll('.ticker').forEach(async ticker => {
-
-      ticker.querySelector('.label').textContent = ticker.dataset.name;
-
-      const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${ticker.dataset.pair}&order=rate_date.desc&limit=2`;
-
-      const res = await fetch(url, {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      });
-
-      const data = await res.json();
-      if (data.length < 2) return;
-
-      const change = ((data[0].value - data[1].value) / data[1].value) * 100;
-      const deltaEl = ticker.querySelector('.delta');
-
-      // ⚠️ Colores invertidos como pediste
-      deltaEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-      deltaEl.className = `delta ${change >= 0 ? 'pos' : 'neg'}`;
-    });
-  }
-
-  /* =========================
-     EVENTOS
+     EVENTOS SIDEBAR
   ========================== */
   document.querySelectorAll('.ticker').forEach(ticker => {
-    ticker.addEventListener('click', () => {
-      document.querySelectorAll('.ticker').forEach(t => t.classList.remove('active'));
-      ticker.classList.add('active');
 
-      currentPair = ticker.dataset.pair;
-      document.getElementById('productTitle').textContent = ticker.dataset.name;
+    ticker.querySelector('.label').textContent = ticker.dataset.name;
 
-      loadChartData();
+    ticker.addEventListener('click', (e) => {
+
+      if (e.ctrlKey || e.metaKey) {
+        comparePair = comparePair === ticker.dataset.pair ? null : ticker.dataset.pair;
+      } else {
+        primaryPair = ticker.dataset.pair;
+        comparePair = null;
+
+        document.querySelectorAll('.ticker')
+          .forEach(t => t.classList.remove('active'));
+
+        ticker.classList.add('active');
+        document.getElementById('productTitle').textContent = ticker.dataset.name;
+      }
+
+      updateChart();
     });
   });
 
+  /* =========================
+     RANGOS
+  ========================== */
   document.querySelectorAll('.ranges button').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.ranges button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
       currentRange = btn.dataset.range;
-      loadChartData();
+      updateChart();
     });
   });
 
   /* =========================
-     INICIALIZACIÓN
+     INIT
   ========================== */
   document.getElementById('productTitle').textContent =
     document.querySelector('.ticker.active').dataset.name;
 
-  loadSidebarChanges();
-  loadChartData();
+  updateChart();
 });
