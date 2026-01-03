@@ -40,6 +40,7 @@ main {
   background: #ffffff;
   border-radius: 8px;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 .ticker.active {
@@ -61,9 +62,9 @@ main {
   font-weight: 600;
 }
 
-/* colores invertidos como pediste */
-.delta.pos { color: #d93025; }
-.delta.neg { color: #1a9c5d; }
+/* colores para delta en sidebar */
+.delta.pos { color: #1a9c5d; } /* verde */
+.delta.neg { color: #d93025; } /* rojo */
 
 /* CONTENT */
 .content {
@@ -73,53 +74,4 @@ main {
 
 .card {
   background: #f6f7f9;
-  border-radius: 20px;
-  padding: 30px;
-}
-
-.price {
-  font-size: 36px;
-  font-weight: 700;
-}
-
-.change {
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.change.pos { color: #d93025; }
-.change.neg { color: #1a9c5d; }
-
-/* RANGE SELECTOR */
-.ranges {
-  margin-bottom: 15px;
-}
-
-.ranges button {
-  border: none;
-  background: transparent;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.ranges button.active {
-  background: #1f4fd8;
-  color: white;
-  border-radius: 6px;
-}
-
-/* CHART */
-.chart-wrapper {
-  height: 320px;
-  background: white;
-  border-radius: 14px;
-  padding: 12px;
-}
-
-/* FOOTER */
-.footer {
-  padding: 25px 0 30px;
-  text-align: center;
-  font-size: 13px;
-  color: #9aa0a6;
-}
+  border-r
