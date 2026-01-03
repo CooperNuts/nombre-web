@@ -79,8 +79,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  async function fetchSeries(pair) {
+  // ----- NUEVO: Últimos precios en la card -----
+  const productPriceEl = document.getElementById('productPrice');
+  const lastPriceMap = {}; // guardamos último precio de cada par
 
+  async function fetchLatestPrice(pair) {
+    const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=1`;
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    const data = await res.json();
+    return data.length ? Number(data[0].value) : null;
+  }
+
+  async function updateCardPrice(pair) {
+    const newPrice = await fetchLatestPrice(pair);
+    if (newPrice === null) {
+      productPriceEl.textContent = 'N/A';
+      productPriceEl.className = 'price neutral';
+      return;
+    }
+
+    const lastPrice = lastPriceMap[pair];
+    if (lastPrice === undefined) {
+      productPriceEl.className = 'price neutral';
+    } else if (newPrice > lastPrice) {
+      productPriceEl.className = 'price up';
+    } else if (newPrice < lastPrice) {
+      productPriceEl.className = 'price down';
+    } else {
+      productPriceEl.className = 'price neutral';
+    }
+
+    productPriceEl.textContent = `USD ${newPrice.toFixed(2)}`;
+    lastPriceMap[pair] = newPrice;
+  }
+
+  // ----- Funciones existentes -----
+  async function fetchSeries(pair) {
     let rangeFilter = '';
     if (currentRange !== 'all') {
       const fromDate = new Date(Date.now() - currentRange * 86400000)
@@ -101,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function updateChart() {
-
     const mainData = await fetchSeries(primaryPair);
     if (!mainData.length) return;
 
@@ -133,6 +171,9 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.options.scales.y.max = max + pad;
 
     chart.update();
+
+    // ----- Actualizamos el precio en la card -----
+    updateCardPrice(primaryPair);
   }
 
   async function loadSidebarChanges() {
@@ -206,4 +247,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadSidebarChanges();
   updateChart();
+
 });
