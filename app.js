@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false, // clave para que canvas llene la altura del wrapper
+      maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 year: 'numeric'
               });
             },
-            label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
           }
         }
       },
@@ -79,45 +79,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ----- Precio dinámico en card central -----
+  // ----- Precio dinámico en card central (solo número) -----
   const productPriceEl = document.getElementById('productPrice');
-  const lastPriceMap = {}; // guardamos último precio por par
+  const lastPriceMap = {};
 
-  async function updateCardPrice(pair) {
-  // Obtenemos valor y unidad de Supabase
-  const url = `${SUPABASE_URL}/rest/v1/us_std?select=value,currency&pair=eq.${pair}&order=rate_date.desc&limit=1`;
-  const res = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`
-    }
-  });
-  const data = await res.json();
-
-  if (!data.length) {
-    productPriceEl.textContent = 'N/A';
-    productPriceEl.className = 'price neutral';
-    return;
+  async function fetchLatestPrice(pair) {
+    const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=1`;
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    const data = await res.json();
+    return data.length ? Number(data[0].value) : null;
   }
-
-  const newPrice = Number(data[0].value);
-  const unit = data[0].currency || ''; // si no hay unidad, queda vacío
-
-  const lastPrice = lastPriceMap[pair];
-  if (lastPrice === undefined) {
-    productPriceEl.className = 'price neutral';
-  } else if (newPrice > lastPrice) {
-    productPriceEl.className = 'price up';
-  } else if (newPrice < lastPrice) {
-    productPriceEl.className = 'price down';
-  } else {
-    productPriceEl.className = 'price neutral';
-  }
-
-  productPriceEl.textContent = `${unit} ${newPrice.toFixed(2)}`;
-  lastPriceMap[pair] = newPrice;
-}
-
 
   async function updateCardPrice(pair) {
     const newPrice = await fetchLatestPrice(pair);
@@ -128,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const lastPrice = lastPriceMap[pair];
+
     if (lastPrice === undefined) {
       productPriceEl.className = 'price neutral';
     } else if (newPrice > lastPrice) {
@@ -138,7 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
       productPriceEl.className = 'price neutral';
     }
 
-    productPriceEl.textContent = `USD ${newPrice.toFixed(2)}`;
+    // Mostramos solo el número
+    productPriceEl.textContent = newPrice.toFixed(2);
     lastPriceMap[pair] = newPrice;
   }
 
@@ -196,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chart.update();
 
-    // ----- Actualizamos el precio en la card -----
+    // ----- Actualizamos el precio en la card central -----
     updateCardPrice(primaryPair);
   }
 
