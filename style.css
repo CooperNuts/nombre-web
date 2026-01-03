@@ -18,7 +18,7 @@ body {
 
 /* MAIN */
 main {
-  flex: 1;
+  flex: 1; /* empuja el footer hacia abajo */
   display: flex;
 }
 
@@ -75,3 +75,11 @@ main {
 .card {
   background: #f6f7f9;
   border-r
+
+  .footer {
+  padding: 25px 0;
+  text-align: center;
+  font-size: 13px;
+  color: #a0a0a0; /* gris claro */
+  background: #fafafa; /* opcional: fondo claro */
+}
