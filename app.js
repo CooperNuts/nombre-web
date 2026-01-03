@@ -83,17 +83,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const productPriceEl = document.getElementById('productPrice');
   const lastPriceMap = {}; // guardamos último precio por par
 
-  async function fetchLatestPrice(pair) {
-    const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=1`;
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
-      }
-    });
-    const data = await res.json();
-    return data.length ? Number(data[0].value) : null;
+  async function updateCardPrice(pair) {
+  // Obtenemos valor y unidad de Supabase
+  const url = `${SUPABASE_URL}/rest/v1/us_std?select=value,currency&pair=eq.${pair}&order=rate_date.desc&limit=1`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    }
+  });
+  const data = await res.json();
+
+  if (!data.length) {
+    productPriceEl.textContent = 'N/A';
+    productPriceEl.className = 'price neutral';
+    return;
   }
+
+  const newPrice = Number(data[0].value);
+  const unit = data[0].currency || ''; // si no hay unidad, queda vacío
+
+  const lastPrice = lastPriceMap[pair];
+  if (lastPrice === undefined) {
+    productPriceEl.className = 'price neutral';
+  } else if (newPrice > lastPrice) {
+    productPriceEl.className = 'price up';
+  } else if (newPrice < lastPrice) {
+    productPriceEl.className = 'price down';
+  } else {
+    productPriceEl.className = 'price neutral';
+  }
+
+  productPriceEl.textContent = `${unit} ${newPrice.toFixed(2)}`;
+  lastPriceMap[pair] = newPrice;
+}
+
 
   async function updateCardPrice(pair) {
     const newPrice = await fetchLatestPrice(pair);
