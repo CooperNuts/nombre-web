@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false, // clave para que canvas llene la altura del wrapper
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
@@ -79,9 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ----- NUEVO: Últimos precios en la card -----
+  // ----- Precio dinámico en card central -----
   const productPriceEl = document.getElementById('productPrice');
-  const lastPriceMap = {}; // guardamos último precio de cada par
+  const lastPriceMap = {}; // guardamos último precio por par
 
   async function fetchLatestPrice(pair) {
     const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=1`;
