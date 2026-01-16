@@ -149,5 +149,6 @@ main {
 .subtitle {
   font-size: 0.8rem;
   color: ##b0b0b0;
+  font-weight: 300;
   margin-top: 6px;
 }
