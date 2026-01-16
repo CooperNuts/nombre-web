@@ -145,3 +145,9 @@ main {
   color: #a0a0a0; /* gris claro */
   background: #fafafa;
 }
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #888;
+  letter-spacing: 0.5px;
+}
