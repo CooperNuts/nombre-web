@@ -73,10 +73,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
       scales: {
-        x: { grid: { display: false } },
-        y: { position: 'right' }
+  x: {
+    grid: {
+      display: false
+    }
+  },
+  y: {
+    position: 'right',
+    grace: '15%',
+    ticks: {
+      precision: 2,
+      callback: function (value) {
+        return Number(value).toFixed(2);
       }
     }
+  }
+}
   });
 
   // ----- Precio dinámico en card central (solo número) -----
