@@ -68,30 +68,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 year: 'numeric'
               });
             },
-            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
+            label: ctx =>
+              `${ctx.dataset.label}: ${Number(ctx.parsed.y).toFixed(2)}`
           }
         }
       },
       scales: {
-  x: {
-    grid: {
-      display: false
-    }
-  },
-  y: {
-    position: 'right',
-    grace: '15%',
-    ticks: {
-      precision: 2,
-      callback: function (value) {
-        return Number(value).toFixed(2);
+        x: {
+          grid: { display: false }
+        },
+        y: {
+          position: 'right',
+          grace: '15%',
+          ticks: {
+            precision: 2,
+            callback: value => Number(value).toFixed(2)
+          }
+        }
       }
     }
-  }
-}
   });
 
-  // ----- Precio dinámico en card central (solo número) -----
+  // ----- Precio dinámico en card central -----
   const productPriceEl = document.getElementById('productPrice');
   const lastPriceMap = {};
 
@@ -127,12 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
       productPriceEl.className = 'price neutral';
     }
 
-    // Mostramos solo el número
     productPriceEl.textContent = newPrice.toFixed(2);
     lastPriceMap[pair] = newPrice;
   }
 
-  // ----- Funciones existentes -----
   async function fetchSeries(pair) {
     let rangeFilter = '';
     if (currentRange !== 'all') {
@@ -167,7 +163,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (comparePair) {
       const compData = await fetchSeries(comparePair);
-      const map = Object.fromEntries(compData.map(d => [d.rate_date, Number(d.value)]));
+      const map = Object.fromEntries(
+        compData.map(d => [d.rate_date, Number(d.value)])
+      );
       const compValues = labels.map(l => map[l] ?? null);
 
       chart.data.datasets[1].data = compValues;
@@ -185,8 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.options.scales.y.max = max + pad;
 
     chart.update();
-
-    // ----- Actualizamos el precio en la card central -----
     updateCardPrice(primaryPair);
   }
 
@@ -221,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const pair = ticker.dataset.pair;
 
     ticker.addEventListener('click', (e) => {
-
       if (e.target.classList.contains('compare-checkbox')) return;
 
       document.querySelectorAll('.ticker').forEach(t => t.classList.remove('active'));
@@ -237,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     checkbox.addEventListener('change', () => {
-
       document.querySelectorAll('.compare-checkbox').forEach(cb => {
         if (cb !== checkbox) cb.checked = false;
       });
