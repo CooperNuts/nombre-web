@@ -141,7 +141,7 @@ main {
 .footer {
   padding: 25px 0;
   text-align: center;
-  font-size: 13px;
+  font-size: 0.8rem;
   color: #a0a0a0; /* gris claro */
   background: #fafafa;
 }
