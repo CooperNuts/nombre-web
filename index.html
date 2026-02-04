@@ -1,23 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pistachio Market Insights</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 
-  <!-- Chart.js UMD -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <!-- Plugin annotation UMD -->
+
+  <!-- Plugin annotation -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.umd.min.js"></script>
 
-  <!-- Registrar plugin de forma segura -->
+  <!-- Registrar el plugin de forma segura -->
   <script>
     if (window.Chart && window.ChartAnnotation) {
       Chart.register(ChartAnnotation);
     }
   </script>
+
 </head>
 <body>
 
@@ -28,21 +30,43 @@
 
 <main>
   <aside class="sidebar">
+
     <div class="ticker active" data-pair="USDLB_STD" data-name="Std. Size USX1 USDLB FAS Calif.">
       <input type="checkbox" class="compare-checkbox" />
       <span class="label"></span>
       <span class="delta"></span>
     </div>
+
     <div class="ticker" data-pair="USDLB_LARGE" data-name="Large Size USX1 USDLB FAS Calif.">
       <input type="checkbox" class="compare-checkbox" />
       <span class="label"></span>
       <span class="delta"></span>
     </div>
+
+    <div class="ticker" data-pair="USDLB_KERNEL" data-name="Kernel W80 USX1 USDLB FAS Calif.">
+      <input type="checkbox" class="compare-checkbox" />
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
+    <div class="ticker" data-pair="EURKG_ES2125" data-name="ES 21/25 EURKG EXW Toledo">
+      <input type="checkbox" class="compare-checkbox" />
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
+    <div class="ticker" data-pair="EURKG_ESKERNEL" data-name="ES Kernel EURKG EXW Toledo">
+      <input type="checkbox" class="compare-checkbox" />
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
   </aside>
 
   <section class="content">
     <div class="card">
-      <h2 id="productTitle">USD / LB</h2>
+
+      <h2 id="productTitle"></h2>
       <div class="price" id="productPrice"></div>
       <div class="change" id="productChange"></div>
 
@@ -57,18 +81,19 @@
       <div class="chart-wrapper">
         <canvas id="currencyChart"></canvas>
       </div>
+
     </div>
   </section>
+
 </main>
 
 <footer class="footer">
   <p>© 2025 · S&LA, S.L.</p>
   <p class="disclaimer">
-    Prices are indicative...
+    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only. Under no circumstances shall they be construed as firm, binding, or contractual offers.
   </p>
 </footer>
 
-<!-- Tu script principal -->
 <script src="app.js"></script>
 </body>
 </html>
