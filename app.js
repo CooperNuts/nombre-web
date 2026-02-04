@@ -7,6 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let comparePair = null;
   let currentRange = 'all';
 
+  const hitos = [
+    { fecha: '2024-09-30', texto: 'Opening C24, 3.75' },
+    { fecha: '2025-09-29', texto: 'Opening C25, 4.10' },
+  ];
+
   const canvas = document.getElementById('currencyChart');
   const ctx = canvas.getContext('2d');
 
@@ -17,6 +22,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const gradientCompare = ctx.createLinearGradient(0, 0, 0, canvas.height);
   gradientCompare.addColorStop(0, 'rgba(120,124,135,0.1)');
   gradientCompare.addColorStop(1, 'rgba(120,124,135,0)');
+
+  // Función para generar anotaciones con cotización
+  function buildHitoAnnotations(labels, values) {
+    const annotations = {};
+
+    hitos.forEach((hito, i) => {
+      const index = labels.indexOf(hito.fecha);
+      if (index === -1) return;
+
+      const valor = values[index];
+
+      annotations[`hito_${i}`] = {
+        type: 'line',
+        xMin: hito.fecha,
+        xMax: hito.fecha,
+        borderColor: 'rgba(139,0,0,0.45)',
+        borderWidth: 0.8,
+        borderDash: [2, 4],
+        label: {
+          enabled: true,
+          content: `${hito.texto}: ${valor.toFixed(2)}`,
+          position: 'start',
+          backgroundColor: 'rgba(139,0,0,0.85)',
+          color: '#fff',
+          font: { size: 10, weight: '500' },
+          padding: 4
+        }
+      };
+    });
+
+    return annotations;
+  }
 
   const chart = new Chart(ctx, {
     type: 'line',
@@ -54,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
+        annotation: { annotations: {} },
         tooltip: {
           backgroundColor: '#12151c',
           titleColor: '#fff',
@@ -74,32 +112,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
       scales: {
-        x: {
-          grid: { display: false }
-        },
+        x: { grid: { display: false } },
         y: {
           position: 'right',
           grace: '15%',
           ticks: {
             precision: 2,
-            callback: value => Number(value).toFixed(2)
+            callback: v => Number(v).toFixed(2)
           }
         }
       }
     }
   });
 
-  // ----- Precio dinámico en card central -----
   const productPriceEl = document.getElementById('productPrice');
   const lastPriceMap = {};
 
   async function fetchLatestPrice(pair) {
     const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=1`;
     const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
-      }
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
     const data = await res.json();
     return data.length ? Number(data[0].value) : null;
@@ -107,12 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function updateCardPrice(pair) {
     const newPrice = await fetchLatestPrice(pair);
-    if (newPrice === null) {
-      productPriceEl.textContent = 'N/A';
-      productPriceEl.className = 'price neutral';
-      return;
-    }
-
     const lastPrice = lastPriceMap[pair];
 
     if (lastPrice === undefined) {
@@ -140,10 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${rangeFilter}&order=rate_date.asc`;
 
     const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
-      }
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
 
     return await res.json();
@@ -182,78 +205,23 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.options.scales.y.min = min - pad;
     chart.options.scales.y.max = max + pad;
 
+    // 🔴 Actualizar hitos con cotización
+    chart.options.plugins.annotation.annotations =
+      buildHitoAnnotations(labels, mainValues);
+
     chart.update();
     updateCardPrice(primaryPair);
   }
 
-  async function loadSidebarChanges() {
-    document.querySelectorAll('.ticker').forEach(async ticker => {
-
-      ticker.querySelector('.label').textContent = ticker.dataset.name;
-
-      const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${ticker.dataset.pair}&order=rate_date.desc&limit=2`;
-
-      const res = await fetch(url, {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      });
-
-      const data = await res.json();
-      if (data.length < 2) return;
-
-      const change = ((data[0].value - data[1].value) / data[1].value) * 100;
-      const deltaEl = ticker.querySelector('.delta');
-
-      deltaEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-      deltaEl.className = `delta ${change >= 0 ? 'pos' : 'neg'}`;
-    });
-  }
-
-  document.querySelectorAll('.ticker').forEach(ticker => {
-
-    const checkbox = ticker.querySelector('.compare-checkbox');
-    const pair = ticker.dataset.pair;
-
-    ticker.addEventListener('click', (e) => {
-      if (e.target.classList.contains('compare-checkbox')) return;
-
-      document.querySelectorAll('.ticker').forEach(t => t.classList.remove('active'));
-      ticker.classList.add('active');
-
-      primaryPair = pair;
-      comparePair = null;
-
-      document.querySelectorAll('.compare-checkbox').forEach(cb => cb.checked = false);
-
-      document.getElementById('productTitle').textContent = ticker.dataset.name;
-      updateChart();
-    });
-
-    checkbox.addEventListener('change', () => {
-      document.querySelectorAll('.compare-checkbox').forEach(cb => {
-        if (cb !== checkbox) cb.checked = false;
-      });
-
-      comparePair = checkbox.checked ? pair : null;
-      updateChart();
-    });
-  });
-
   document.querySelectorAll('.ranges button').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.ranges button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.ranges button')
+        .forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentRange = btn.dataset.range;
       updateChart();
     });
   });
 
-  document.getElementById('productTitle').textContent =
-    document.querySelector('.ticker.active').dataset.name;
-
-  loadSidebarChanges();
   updateChart();
-
 });
