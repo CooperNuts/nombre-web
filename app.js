@@ -3,103 +3,252 @@ document.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
+  let primaryPair = 'USDLB_STD';
+  let comparePair = null;
+  let currentRange = 'all';
+
+  // 🔹 HITOS: fechas importantes
   const hitos = [
-    { fecha: '2023-06-01' },
-    { fecha: '2023-09-15' },
-    { fecha: '2023-12-20' }
+    { fecha: '2023-06-01', texto: 'Resultados' },
+    { fecha: '2023-09-15', texto: 'Regulación' },
+    { fecha: '2023-12-20', texto: 'Anuncio' }
   ];
 
   const canvas = document.getElementById('currencyChart');
   const ctx = canvas.getContext('2d');
 
+  // 🔹 Gradientes para sombra
+  const gradientMain = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradientMain.addColorStop(0, 'rgba(18,21,28,0.12)');
+  gradientMain.addColorStop(1, 'rgba(18,21,28,0)');
+
+  const gradientCompare = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradientCompare.addColorStop(0, 'rgba(120,124,135,0.1)');
+  gradientCompare.addColorStop(1, 'rgba(120,124,135,0)');
+
+  // 🔹 Construir anotaciones de hitos
+  function buildHitoAnnotations(labels, values) {
+    const annotations = {};
+    hitos.forEach((hito, i) => {
+      const index = labels.indexOf(hito.fecha);
+      if (index === -1 || values[index] == null) return;
+
+      annotations[`hito_${i}`] = {
+        type: 'line',
+        xMin: hito.fecha,
+        xMax: hito.fecha,
+        borderColor: 'rgba(139,0,0,0.45)',
+        borderWidth: 0.7,
+        borderDash: [2, 4],
+        label: {
+          enabled: true,
+          content: `${values[index].toFixed(2)}`,
+          position: 'start',
+          backgroundColor: 'rgba(139,0,0,0.85)',
+          color: '#fff',
+          font: { size: 9, weight: '500' },
+          padding: 4
+        }
+      };
+    });
+    return annotations;
+  }
+
+  // 🔹 Chart.js
   const chart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: [],
-      datasets: [{
-        label: 'USD / LB',
-        data: [],
-        borderColor: '#12151c',
-        borderWidth: 0.8,
-        tension: 0.28,
-        pointRadius: 0,
-        pointHoverRadius: 3,
-        fill: false
-      }]
+      datasets: [
+        {
+          label: 'Principal',
+          data: [],
+          borderColor: '#12151c',
+          backgroundColor: gradientMain,
+          borderWidth: 0.6,
+          tension: 0.28,
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 3
+        },
+        {
+          label: 'Comparación',
+          data: [],
+          borderColor: '#7a7f8a',
+          backgroundColor: gradientCompare,
+          borderWidth: 0.6,
+          tension: 0.28,
+          fill: false,
+          pointRadius: 0,
+          pointHoverRadius: 3,
+          hidden: true
+        }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         annotation: { annotations: {} },
         tooltip: {
+          backgroundColor: '#12151c',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          displayColors: false,
           callbacks: {
-            label: ctx => Number(ctx.parsed.y).toFixed(2)
+            title: items => {
+              const d = new Date(items[0].label);
+              return d.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              });
+            },
+            label: ctx =>
+              `${ctx.dataset.label}: ${Number(ctx.parsed.y).toFixed(2)}`
           }
         }
       },
       scales: {
         x: { grid: { display: false } },
-        y: { position: 'right' }
+        y: {
+          position: 'right',
+          grace: '15%',
+          ticks: { precision: 2, callback: value => Number(value).toFixed(2) }
+        }
       }
     }
   });
 
-  function buildHitos(labels, values) {
-    const annotations = {};
+  // 🔹 Precios dinámicos en card central
+  const productPriceEl = document.getElementById('productPrice');
+  const lastPriceMap = {};
 
-    hitos.forEach((h, i) => {
-      const idx = labels.indexOf(h.fecha);
-      if (idx === -1) return;
-
-      annotations[`hito_${i}`] = {
-        type: 'line',
-        xMin: h.fecha,
-        xMax: h.fecha,
-        borderColor: 'rgba(139,0,0,0.4)',
-        borderWidth: 0.6,
-        borderDash: [2, 4],
-        label: {
-          enabled: true,
-          content: values[idx].toFixed(2),
-          position: 'start',
-          backgroundColor: 'rgba(139,0,0,0.85)',
-          color: '#fff',
-          font: { size: 9 },
-          padding: 3
-        }
-      };
+  async function fetchLatestPrice(pair) {
+    const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=1`;
+    const res = await fetch(url, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
-
-    return annotations;
+    const data = await res.json();
+    return data.length ? Number(data[0].value) : null;
   }
 
-  async function fetchSeries() {
-    const url = `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.USDLB_STD&order=rate_date.asc`;
+  async function updateCardPrice(pair) {
+    const newPrice = await fetchLatestPrice(pair);
+    if (newPrice === null) {
+      productPriceEl.textContent = 'N/A';
+      productPriceEl.className = 'price neutral';
+      return;
+    }
+    const lastPrice = lastPriceMap[pair];
+    if (lastPrice === undefined) productPriceEl.className = 'price neutral';
+    else if (newPrice > lastPrice) productPriceEl.className = 'price up';
+    else if (newPrice < lastPrice) productPriceEl.className = 'price down';
+    else productPriceEl.className = 'price neutral';
+    productPriceEl.textContent = newPrice.toFixed(2);
+    lastPriceMap[pair] = newPrice;
+  }
+
+  async function fetchSeries(pair) {
+    let rangeFilter = '';
+    if (currentRange !== 'all') {
+      const fromDate = new Date(Date.now() - currentRange * 86400000)
+        .toISOString().split('T')[0];
+      rangeFilter = `&rate_date=gte.${fromDate}`;
+    }
+    const url = `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${rangeFilter}&order=rate_date.asc`;
     const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
-      }
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
-    return res.json();
+    return await res.json();
   }
 
   async function updateChart() {
-    const data = await fetchSeries();
-    if (!data.length) return;
+    const mainData = await fetchSeries(primaryPair);
+    if (!mainData.length) return;
 
-    const labels = data.map(d => d.rate_date);
-    const values = data.map(d => Number(d.value));
+    const labels = mainData.map(d => d.rate_date);
+    const mainValues = mainData.map(d => Number(d.value));
 
     chart.data.labels = labels;
-    chart.data.datasets[0].data = values;
-    chart.options.plugins.annotation.annotations =
-      buildHitos(labels, values);
+    chart.data.datasets[0].data = mainValues;
+
+    let allValues = [...mainValues];
+
+    if (comparePair) {
+      const compData = await fetchSeries(comparePair);
+      const map = Object.fromEntries(compData.map(d => [d.rate_date, Number(d.value)]));
+      const compValues = labels.map(l => map[l] ?? null);
+      chart.data.datasets[1].data = compValues;
+      chart.data.datasets[1].hidden = false;
+      allValues.push(...compValues.filter(v => v !== null));
+    } else chart.data.datasets[1].hidden = true;
+
+    // 🔹 Hitos
+    chart.options.plugins.annotation.annotations = buildHitoAnnotations(labels, mainValues);
+
+    // 🔹 Ajuste dinámico eje Y
+    const min = Math.min(...allValues);
+    const max = Math.max(...allValues);
+    const pad = (max - min) * 0.15 || 0.1;
+    chart.options.scales.y.min = min - pad;
+    chart.options.scales.y.max = max + pad;
 
     chart.update();
+    updateCardPrice(primaryPair);
   }
 
+  // 🔹 Sidebar
+  async function loadSidebarChanges() {
+    document.querySelectorAll('.ticker').forEach(async ticker => {
+      ticker.querySelector('.label').textContent = ticker.dataset.name;
+      const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${ticker.dataset.pair}&order=rate_date.desc&limit=2`;
+      const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+      const data = await res.json();
+      if (data.length < 2) return;
+      const change = ((data[0].value - data[1].value)/data[1].value)*100;
+      const deltaEl = ticker.querySelector('.delta');
+      deltaEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+      deltaEl.className = `delta ${change >= 0 ? 'pos' : 'neg'}`;
+    });
+  }
+
+  document.querySelectorAll('.ticker').forEach(ticker => {
+    const checkbox = ticker.querySelector('.compare-checkbox');
+    const pair = ticker.dataset.pair;
+
+    ticker.addEventListener('click', (e) => {
+      if (e.target.classList.contains('compare-checkbox')) return;
+      document.querySelectorAll('.ticker').forEach(t => t.classList.remove('active'));
+      ticker.classList.add('active');
+      primaryPair = pair;
+      comparePair = null;
+      document.querySelectorAll('.compare-checkbox').forEach(cb => cb.checked = false);
+      document.getElementById('productTitle').textContent = ticker.dataset.name;
+      updateChart();
+    });
+
+    checkbox.addEventListener('change', () => {
+      document.querySelectorAll('.compare-checkbox').forEach(cb => { if(cb!==checkbox) cb.checked=false; });
+      comparePair = checkbox.checked ? pair : null;
+      updateChart();
+    });
+  });
+
+  document.querySelectorAll('.ranges button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ranges button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentRange = btn.dataset.range;
+      updateChart();
+    });
+  });
+
+  document.getElementById('productTitle').textContent =
+    document.querySelector('.ticker.active').dataset.name;
+
+  loadSidebarChanges();
   updateChart();
 });
