@@ -7,17 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let comparePair = null;
   let currentRange = 'all';
 
-  // 🔹 HITOS: fechas importantes
+  // 🔹 HITOS elegantes
   const hitos = [
-    { fecha: '2023-06-01', texto: 'Resultados' },
-    { fecha: '2023-09-15', texto: 'Regulación' },
-    { fecha: '2023-12-20', texto: 'Anuncio' }
+    { fecha: '2024-09-30', texto: 'Op. C24, 3.75' },
+    { fecha: '2025-09-29', texto: 'Op. C25, 4.10' }
   ];
 
   const canvas = document.getElementById('currencyChart');
   const ctx = canvas.getContext('2d');
 
-  // 🔹 Gradientes para sombra
   const gradientMain = ctx.createLinearGradient(0, 0, 0, canvas.height);
   gradientMain.addColorStop(0, 'rgba(18,21,28,0.12)');
   gradientMain.addColorStop(1, 'rgba(18,21,28,0)');
@@ -29,32 +27,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // 🔹 Construir anotaciones de hitos
   function buildHitoAnnotations(labels, values) {
     const annotations = {};
-    hitos.forEach((hito, i) => {
-      const index = labels.indexOf(hito.fecha);
+    hitos.forEach((h, i) => {
+      const index = labels.indexOf(h.fecha);
       if (index === -1 || values[index] == null) return;
 
       annotations[`hito_${i}`] = {
         type: 'line',
-        xMin: hito.fecha,
-        xMax: hito.fecha,
-        borderColor: 'rgba(139,0,0,0.45)',
-        borderWidth: 0.7,
+        xMin: h.fecha,
+        xMax: h.fecha,
+        borderColor: 'rgba(139,0,0,0.35)',
+        borderWidth: 0.6,
         borderDash: [2, 4],
         label: {
-          enabled: true,
-          content: `${values[index].toFixed(2)}`,
+          enabled: false, // no visible por defecto
           position: 'start',
           backgroundColor: 'rgba(139,0,0,0.85)',
           color: '#fff',
           font: { size: 9, weight: '500' },
-          padding: 4
+          padding: 4,
+          content: `${values[index].toFixed(2)} – ${h.texto}`,
+          display: ctx => ctx.hovered
         }
       };
     });
     return annotations;
   }
 
-  // 🔹 Chart.js
   const chart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -100,14 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
           callbacks: {
             title: items => {
               const d = new Date(items[0].label);
-              return d.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-              });
+              return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
             },
-            label: ctx =>
-              `${ctx.dataset.label}: ${Number(ctx.parsed.y).toFixed(2)}`
+            label: ctx => `${ctx.dataset.label}: ${Number(ctx.parsed.y).toFixed(2)}`
           }
         }
       },
@@ -122,26 +115,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 🔹 Precios dinámicos en card central
   const productPriceEl = document.getElementById('productPrice');
   const lastPriceMap = {};
 
   async function fetchLatestPrice(pair) {
     const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=1`;
-    const res = await fetch(url, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
+    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
     const data = await res.json();
     return data.length ? Number(data[0].value) : null;
   }
 
   async function updateCardPrice(pair) {
     const newPrice = await fetchLatestPrice(pair);
-    if (newPrice === null) {
-      productPriceEl.textContent = 'N/A';
-      productPriceEl.className = 'price neutral';
-      return;
-    }
+    if (newPrice === null) { productPriceEl.textContent = 'N/A'; productPriceEl.className = 'price neutral'; return; }
     const lastPrice = lastPriceMap[pair];
     if (lastPrice === undefined) productPriceEl.className = 'price neutral';
     else if (newPrice > lastPrice) productPriceEl.className = 'price up';
@@ -154,14 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchSeries(pair) {
     let rangeFilter = '';
     if (currentRange !== 'all') {
-      const fromDate = new Date(Date.now() - currentRange * 86400000)
-        .toISOString().split('T')[0];
+      const fromDate = new Date(Date.now() - currentRange * 86400000).toISOString().split('T')[0];
       rangeFilter = `&rate_date=gte.${fromDate}`;
     }
     const url = `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${rangeFilter}&order=rate_date.asc`;
-    const res = await fetch(url, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
+    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
     return await res.json();
   }
 
@@ -186,10 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
       allValues.push(...compValues.filter(v => v !== null));
     } else chart.data.datasets[1].hidden = true;
 
-    // 🔹 Hitos
     chart.options.plugins.annotation.annotations = buildHitoAnnotations(labels, mainValues);
 
-    // 🔹 Ajuste dinámico eje Y
     const min = Math.min(...allValues);
     const max = Math.max(...allValues);
     const pad = (max - min) * 0.15 || 0.1;
@@ -200,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCardPrice(primaryPair);
   }
 
-  // 🔹 Sidebar
   async function loadSidebarChanges() {
     document.querySelectorAll('.ticker').forEach(async ticker => {
       ticker.querySelector('.label').textContent = ticker.dataset.name;
@@ -225,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ticker.classList.add('active');
       primaryPair = pair;
       comparePair = null;
-      document.querySelectorAll('.compare-checkbox').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.compare-checkbox').forEach(cb => { if(cb!==checkbox) cb.checked=false; });
       document.getElementById('productTitle').textContent = ticker.dataset.name;
       updateChart();
     });
