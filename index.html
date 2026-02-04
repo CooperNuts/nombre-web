@@ -6,7 +6,17 @@
   <title>Pistachio Market Insights</title>
 
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+
+  <!-- Chart.js (UMD estable) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Plugin annotation (OBLIGATORIO) -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.umd.min.js"></script>
+
+  <!-- Registro seguro -->
+  <script>
+    Chart.register(ChartAnnotation);
+  </script>
 </head>
 
 <body>
@@ -20,37 +30,31 @@
 
   <aside class="sidebar">
 
-    <div class="ticker active" data-pair="USDLB_STD" data-name="Std. Size USX1
-      USDLB FAS Calif.">
+    <div class="ticker active" data-pair="USDLB_STD" data-name="Std. Size USX1 USDLB FAS Calif.">
       <input type="checkbox" class="compare-checkbox" />
       <span class="label"></span>
       <span class="delta"></span>
     </div>
 
-    <div class="ticker" data-pair="USDLB_LARGE" data-name="Large Size USX1
-      USDLB FAS Calif.">
+    <div class="ticker" data-pair="USDLB_LARGE" data-name="Large Size USX1 USDLB FAS Calif.">
       <input type="checkbox" class="compare-checkbox" />
       <span class="label"></span>
       <span class="delta"></span>
     </div>
 
-    <div class="ticker" data-pair="USDLB_KERNEL" data-name="Kernel W80 USX1
-      USDLB FAS Calif.">
+    <div class="ticker" data-pair="USDLB_KERNEL" data-name="Kernel W80 USX1 USDLB FAS Calif.">
       <input type="checkbox" class="compare-checkbox" />
       <span class="label"></span>
       <span class="delta"></span>
     </div>
 
-    <!-- 🔹 NUEVOS PRODUCTOS -->
-    <div class="ticker" data-pair="EURKG_ES2125" data-name="ES 21/25
-      EURKG EXW Toledo">
+    <div class="ticker" data-pair="EURKG_ES2125" data-name="ES 21/25 EURKG EXW Toledo">
       <input type="checkbox" class="compare-checkbox" />
       <span class="label"></span>
       <span class="delta"></span>
     </div>
 
-    <div class="ticker" data-pair="EURKG_ESKERNEL" data-name="ES Kernel
-      EURKG EXW Toledo">
+    <div class="ticker" data-pair="EURKG_ESKERNEL" data-name="ES Kernel EURKG EXW Toledo">
       <input type="checkbox" class="compare-checkbox" />
       <span class="label"></span>
       <span class="delta"></span>
@@ -85,10 +89,8 @@
 <footer class="footer">
   <p>© 2025 · S&LA, S.L.</p>
 
-
-    </div>
   <p class="disclaimer">
-    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only. Under no circumstances shall they be construed as firm, binding, or contractual offers. The indicated prices are derived from information gathered from various publicly available and industry-relevant sources. While reasonable efforts are made to ensure accuracy, no representation or warranty is given as to the completeness, reliability, or timeliness of such information. These prices do not take into account specific conditions related to product availability, logistics, contractual volumes, quality specifications, or individual payment terms, all of which may have a material impact on actual commercial offers.
+    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only. Under no circumstances shall they be construed as firm, binding, or contractual offers.
   </p>
 </footer>
 
