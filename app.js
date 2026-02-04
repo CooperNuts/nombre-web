@@ -7,9 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let comparePair = null;
   let currentRange = 'all';
 
+  // 🔴 HITOS
   const hitos = [
-    { fecha: '2024-09-30', texto: 'Opening C24, 3.75' },
-    { fecha: '2025-09-29', texto: 'Opening C25, 4.10' },
+    { fecha: '2023-06-01', texto: 'Resultados' },
+    { fecha: '2023-09-15', texto: 'Regulación' },
+    { fecha: '2023-12-20', texto: 'Anuncio' }
   ];
 
   const canvas = document.getElementById('currencyChart');
@@ -23,30 +25,28 @@ document.addEventListener('DOMContentLoaded', () => {
   gradientCompare.addColorStop(0, 'rgba(120,124,135,0.1)');
   gradientCompare.addColorStop(1, 'rgba(120,124,135,0)');
 
-  // Función para generar anotaciones con cotización
+  // 🧠 Hitos minimalistas + cotización
   function buildHitoAnnotations(labels, values) {
     const annotations = {};
 
     hitos.forEach((hito, i) => {
       const index = labels.indexOf(hito.fecha);
-      if (index === -1) return;
-
-      const valor = values[index];
+      if (index === -1 || values[index] == null) return;
 
       annotations[`hito_${i}`] = {
         type: 'line',
         xMin: hito.fecha,
         xMax: hito.fecha,
         borderColor: 'rgba(139,0,0,0.45)',
-        borderWidth: 0.8,
+        borderWidth: 0.7,
         borderDash: [2, 4],
         label: {
           enabled: true,
-          content: `${hito.texto}: ${valor.toFixed(2)}`,
+          content: `${values[index].toFixed(2)}`,
           position: 'start',
           backgroundColor: 'rgba(139,0,0,0.85)',
           color: '#fff',
-          font: { size: 10, weight: '500' },
+          font: { size: 9, weight: '500' },
           padding: 4
         }
       };
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: false },
+        legend: { display: false }, // tu leyenda izquierda es externa
         annotation: { annotations: {} },
         tooltip: {
           backgroundColor: '#12151c',
@@ -125,36 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  const productPriceEl = document.getElementById('productPrice');
-  const lastPriceMap = {};
-
-  async function fetchLatestPrice(pair) {
-    const url = `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=1`;
-    const res = await fetch(url, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    });
-    const data = await res.json();
-    return data.length ? Number(data[0].value) : null;
-  }
-
-  async function updateCardPrice(pair) {
-    const newPrice = await fetchLatestPrice(pair);
-    const lastPrice = lastPriceMap[pair];
-
-    if (lastPrice === undefined) {
-      productPriceEl.className = 'price neutral';
-    } else if (newPrice > lastPrice) {
-      productPriceEl.className = 'price up';
-    } else if (newPrice < lastPrice) {
-      productPriceEl.className = 'price down';
-    } else {
-      productPriceEl.className = 'price neutral';
-    }
-
-    productPriceEl.textContent = newPrice.toFixed(2);
-    lastPriceMap[pair] = newPrice;
-  }
-
   async function fetchSeries(pair) {
     let rangeFilter = '';
     if (currentRange !== 'all') {
@@ -166,7 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${rangeFilter}&order=rate_date.asc`;
 
     const res = await fetch(url, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
     });
 
     return await res.json();
@@ -177,40 +150,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!mainData.length) return;
 
     const labels = mainData.map(d => d.rate_date);
-    const mainValues = mainData.map(d => Number(d.value));
+    const values = mainData.map(d => Number(d.value));
 
     chart.data.labels = labels;
-    chart.data.datasets[0].data = mainValues;
+    chart.data.datasets[0].data = values;
 
-    let allValues = [...mainValues];
-
-    if (comparePair) {
-      const compData = await fetchSeries(comparePair);
-      const map = Object.fromEntries(
-        compData.map(d => [d.rate_date, Number(d.value)])
-      );
-      const compValues = labels.map(l => map[l] ?? null);
-
-      chart.data.datasets[1].data = compValues;
-      chart.data.datasets[1].hidden = false;
-      allValues.push(...compValues.filter(v => v !== null));
-    } else {
-      chart.data.datasets[1].hidden = true;
-    }
-
-    const min = Math.min(...allValues);
-    const max = Math.max(...allValues);
-    const pad = (max - min) * 0.15 || 0.1;
-
-    chart.options.scales.y.min = min - pad;
-    chart.options.scales.y.max = max + pad;
-
-    // 🔴 Actualizar hitos con cotización
     chart.options.plugins.annotation.annotations =
-      buildHitoAnnotations(labels, mainValues);
+      buildHitoAnnotations(labels, values);
 
     chart.update();
-    updateCardPrice(primaryPair);
   }
 
   document.querySelectorAll('.ranges button').forEach(btn => {
