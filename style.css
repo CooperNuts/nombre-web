@@ -103,3 +103,19 @@ main {
 .chart-wrapper {
   height: 360px;
 }
+
+footer {
+  margin-top: 96px;               /* separación clara del contenido */
+  padding: 48px 32px 32px;
+  background: #f7f7f8;
+  border-top: 1px solid rgba(18, 21, 28, 0.08);
+}
+
+.footer p,
+footer p {
+  margin: 0 auto;
+  max-width: 1100px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: #6b7280;
+}
