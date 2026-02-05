@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+  /* =====================
+     CONFIG
+  ===================== */
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
@@ -7,27 +10,27 @@ document.addEventListener('DOMContentLoaded', () => {
   let comparePair = null;
   let currentRange = 'all';
 
-  /* =====================
-     HITOS
-  ===================== */
   const hitos = [
     { fecha: '2024-09-30', texto: 'Opening C24, 3.75' },
     { fecha: '2025-09-29', texto: 'Op. C25, 4.10' }
   ];
 
   /* =====================
-     SIDEBAR – RESTAURAR TEXTOS
+     SIDEBAR + TÍTULOS
   ===================== */
+  const productTitle = document.getElementById('productTitle');
+  const productPriceEl = document.getElementById('productPrice');
+  const productChangeEl = document.getElementById('productChange');
+
   document.querySelectorAll('.ticker').forEach(ticker => {
     ticker.querySelector('.label').textContent = ticker.dataset.name;
   });
 
-  const productTitle = document.getElementById('productTitle');
   productTitle.textContent =
     document.querySelector('.ticker.active').dataset.name;
 
   /* =====================
-     CHART
+     CHART SETUP
   ===================== */
   const canvas = document.getElementById('currencyChart');
   const ctx = canvas.getContext('2d');
@@ -93,6 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  /* =====================
+     DATA FETCH
+  ===================== */
   async function fetchSeries(pair) {
     let rangeFilter = '';
     if (currentRange !== 'all') {
@@ -108,10 +114,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return await res.json();
   }
 
-  function buildAnnotations(labels, values) {
+  async function fetchLatestPrices(pair) {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}&order=rate_date.desc&limit=2`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    );
+    return await res.json();
+  }
+
+  /* =====================
+     HITOS
+  ===================== */
+  function buildAnnotations(labels) {
     const annotations = {};
     hitos.forEach((h, i) => {
-      let idx = labels.reduce((best, l, j) =>
+      const idx = labels.reduce((best, l, j) =>
         Math.abs(new Date(l) - new Date(h.fecha)) <
         Math.abs(new Date(labels[best]) - new Date(h.fecha)) ? j : best, 0);
 
@@ -127,6 +144,33 @@ document.addEventListener('DOMContentLoaded', () => {
     return annotations;
   }
 
+  /* =====================
+     HEADER PRICE
+  ===================== */
+  async function updateHeaderPrice(pair) {
+    const data = await fetchLatestPrices(pair);
+    if (!data.length) return;
+
+    const last = +data[0].value;
+    const prev = data[1] ? +data[1].value : null;
+
+    productPriceEl.textContent = last.toFixed(2);
+
+    if (prev !== null) {
+      const change = ((last - prev) / prev) * 100;
+      productChangeEl.textContent =
+        `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+
+      productPriceEl.className =
+        `price ${change > 0 ? 'up' : change < 0 ? 'down' : 'neutral'}`;
+      productChangeEl.className =
+        `change ${change > 0 ? 'up' : change < 0 ? 'down' : 'neutral'}`;
+    }
+  }
+
+  /* =====================
+     UPDATE CHART
+  ===================== */
   async function updateChart() {
     const data = await fetchSeries(primaryPair);
     if (!data.length) return;
@@ -136,27 +180,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
+
     chart.options.plugins.annotation.annotations =
-      buildAnnotations(labels, values);
+      buildAnnotations(labels);
 
     chart.update();
+    updateHeaderPrice(primaryPair);
   }
 
   /* =====================
-     INTERACCIÓN SIDEBAR
+     INTERACTIONS
   ===================== */
   document.querySelectorAll('.ticker').forEach(ticker => {
     const pair = ticker.dataset.pair;
+    const checkbox = ticker.querySelector('.compare-checkbox');
 
-    ticker.addEventListener('click', () => {
+    ticker.addEventListener('click', e => {
+      if (e.target === checkbox) return;
+
       document.querySelectorAll('.ticker')
         .forEach(t => t.classList.remove('active'));
       ticker.classList.add('active');
 
       primaryPair = pair;
       comparePair = null;
+      document.querySelectorAll('.compare-checkbox')
+        .forEach(cb => cb.checked = false);
 
       productTitle.textContent = ticker.dataset.name;
+      updateChart();
+    });
+
+    checkbox.addEventListener('change', () => {
+      comparePair = checkbox.checked ? pair : null;
+      chart.data.datasets[1].hidden = !comparePair;
       updateChart();
     });
   });
