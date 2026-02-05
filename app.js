@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
      HITOS IMPORTANTES
   ========================== */
   const hitos = [
-    { fecha: '2024-09-30', texto: 'Opening C24, 3.75' },
+    { fecha: '2024-09-30', texto: 'Op. C24, 3.75' },
     { fecha: '2025-09-29', texto: 'Op. C25, 4.10' }
   ];
 
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data: [],
         borderColor: '#12151c',
         backgroundColor: gradient,
-        borderWidth: 0.6,
+        borderWidth: 0.4,
         fill: true,
         tension: 0.28,
         pointRadius: 0
