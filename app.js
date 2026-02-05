@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
      HITOS IMPORTANTES
   ========================== */
   const hitos = [
-    { fecha: '2024-09-30', texto: 'Op. C24, 3.75' },
-    { fecha: '2025-09-29', texto: 'Op. C25, 4.10' }
+    { fecha: '2024-09-30', texto: 'Op. C24' },
+    { fecha: '2025-09-29', texto: 'Op. C25' }
   ];
 
   /* ==========================
