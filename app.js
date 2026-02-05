@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let primaryPair = 'USDLB_STD';
   let currentRange = 'all';
 
+  /* ==========================
+     HITOS IMPORTANTES
+  ========================== */
   const hitos = [
     { fecha: '2024-09-30', texto: 'Opening C24, 3.75' },
     { fecha: '2025-09-29', texto: 'Op. C25, 4.10' }
@@ -23,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
 
-    // crear canvas sparkline
     const canvas = document.createElement('canvas');
     canvas.width = 220;
     canvas.height = 40;
@@ -39,30 +41,42 @@ document.addEventListener('DOMContentLoaded', () => {
   ========================== */
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
-  const gradient = ctx.createLinearGradient(0,0,0,360);
-  gradient.addColorStop(0,'rgba(18,21,28,0.12)');
-  gradient.addColorStop(1,'rgba(18,21,28,0)');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 360);
+  gradient.addColorStop(0, 'rgba(18,21,28,0.12)');
+  gradient.addColorStop(1, 'rgba(18,21,28,0)');
 
   const chart = new Chart(ctx, {
     type: 'line',
-    data: { labels: [], datasets: [{
-      data: [],
-      borderColor: '#12151c',
-      backgroundColor: gradient,
-      fill: true,
-      tension: 0.28,
-      pointRadius: 0
-    }]},
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Price',
+        data: [],
+        borderColor: '#12151c',
+        backgroundColor: gradient,
+        borderWidth: 0.6,
+        fill: true,
+        tension: 0.28,
+        pointRadius: 0
+      }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
       plugins: {
         legend: { display: false },
+        tooltip: {
+          backgroundColor: '#12151c',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          displayColors: false
+        },
         annotation: { annotations: {} }
       },
       scales: {
-        x: { grid: { display: false }},
-        y: { position: 'right' }
+        x: { grid: { display: false } },
+        y: { position: 'right', grace: '15%' }
       }
     }
   });
@@ -108,17 +122,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (prev) {
       const ch = ((last - prev) / prev) * 100;
-      productChange.textContent = `${ch>=0?'+':''}${ch.toFixed(2)}%`;
-      productPrice.className  = `price ${ch>=0?'up':'down'}`;
-      productChange.className = `change ${ch>=0?'up':'down'}`;
+      productChange.textContent = `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+      productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
+      productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
     }
+  }
+
+  /* ==========================
+     HITOS → ANNOTATIONS
+  ========================== */
+  function buildHitos(labels, values) {
+    const annotations = {};
+
+    hitos.forEach((h, i) => {
+
+      let idx = labels.findIndex(l => l >= h.fecha);
+      if (idx === -1) return;
+
+      annotations[`hito_${i}`] = {
+        type: 'line',
+        xMin: labels[idx],
+        xMax: labels[idx],
+        borderColor: 'rgba(139,0,0,0.45)',
+        borderWidth: 0.6,
+        borderDash: [2, 4],
+
+        label: {
+          display: false,
+          content: `${h.texto} · ${values[idx].toFixed(2)}`,
+          backgroundColor: 'rgba(139,0,0,0.9)',
+          color: '#fff',
+          font: { size: 11, weight: '500' },
+          padding: 6,
+          position: 'start'
+        },
+
+        enter({ element }) {
+          element.label.options.display = true;
+          return true;
+        },
+        leave({ element }) {
+          element.label.options.display = false;
+          return true;
+        }
+      };
+    });
+
+    return annotations;
   }
 
   /* ==========================
      SIDEBAR + SPARKLINES
   ========================== */
   async function updateSidebar() {
-
     tickers.forEach(async t => {
 
       const pair = t.dataset.pair;
@@ -132,22 +188,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const values = data.map(x => +x.value);
       const last = values.at(-1);
       const prev = values.at(-2);
-
       const ch = ((last - prev) / prev) * 100;
-      const cls = ch>0?'up':ch<0?'down':'neutral';
 
       deltaEl.textContent =
-        `${last.toFixed(2)} · ${ch>=0?'+':''}${ch.toFixed(2)}%`;
-      deltaEl.className = `delta ${cls}`;
+        `${last.toFixed(2)} · ${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+      deltaEl.className = `delta ${ch > 0 ? 'up' : 'down'}`;
 
-      // sparkline
       new Chart(sctx, {
         type: 'line',
         data: {
-          labels: values.map((_,i)=>i),
+          labels: values.map((_, i) => i),
           datasets: [{
             data: values,
-            borderColor: ch>=0 ? '#1a7f37' : '#b42318',
+            borderColor: ch >= 0 ? '#1a7f37' : '#b42318',
             borderWidth: 1,
             tension: 0.3,
             pointRadius: 0
@@ -155,11 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         options: {
           responsive: false,
-          plugins: { legend: { display: false }, tooltip: { enabled: false }},
-          scales: {
-            x: { display: false },
-            y: { display: false }
-          }
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: { x: { display: false }, y: { display: false } }
         }
       });
 
@@ -173,10 +223,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = await fetchSeries(primaryPair);
     if (!d.length) return;
 
-    chart.data.labels = d.map(x=>x.rate_date);
-    chart.data.datasets[0].data = d.map(x=>+x.value);
-    chart.update();
+    const labels = d.map(x => x.rate_date);
+    const values = d.map(x => +x.value);
 
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = values;
+    chart.options.plugins.annotation.annotations =
+      buildHitos(labels, values);
+
+    chart.update();
     updateHeader(primaryPair);
   }
 
@@ -185,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ========================== */
   tickers.forEach(t => {
     t.addEventListener('click', () => {
-      tickers.forEach(x=>x.classList.remove('active'));
+      tickers.forEach(x => x.classList.remove('active'));
       t.classList.add('active');
       primaryPair = t.dataset.pair;
       productTitle.textContent = t.dataset.name;
@@ -196,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.ranges button').forEach(b => {
     b.addEventListener('click', () => {
       document.querySelectorAll('.ranges button')
-        .forEach(x=>x.classList.remove('active'));
+        .forEach(x => x.classList.remove('active'));
       b.classList.add('active');
       currentRange = b.dataset.range;
       updateChart();
