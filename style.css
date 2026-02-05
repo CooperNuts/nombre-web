@@ -152,3 +152,39 @@ main {
   font-weight: 300;
   margin-top: 6px;
 }
+
+/* --- FIX VISIBILIDAD TEXTOS --- */
+
+body {
+  color: #12151c;
+}
+
+.header h1 {
+  color: #12151c;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.header .subtitle {
+  color: #555;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.sidebar {
+  color: #12151c;
+}
+
+.sidebar .label {
+  color: #12151c;
+  font-weight: 500;
+}
+
+.sidebar .delta {
+  font-weight: 600;
+}
+
+h1, h2, h3, span, p {
+  visibility: visible;
+  opacity: 1;
+}
