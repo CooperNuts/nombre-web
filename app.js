@@ -11,19 +11,32 @@ document.addEventListener('DOMContentLoaded', () => {
     { fecha: '2025-09-29', texto: 'Op. C25, 4.10' }
   ];
 
-  /* ---------- UI ---------- */
-  const productTitle = document.getElementById('productTitle');
-  const productPrice = document.getElementById('productPrice');
+  /* ==========================
+     UI ELEMENTS
+  ========================== */
+  const productTitle  = document.getElementById('productTitle');
+  const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
 
-  document.querySelectorAll('.ticker').forEach(t => {
+  const tickers = document.querySelectorAll('.ticker');
+
+  tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
+
+    // crear canvas sparkline
+    const canvas = document.createElement('canvas');
+    canvas.width = 220;
+    canvas.height = 40;
+    canvas.className = 'sparkline';
+    t.appendChild(canvas);
   });
 
   productTitle.textContent =
     document.querySelector('.ticker.active').dataset.name;
 
-  /* ---------- CHART ---------- */
+  /* ==========================
+     MAIN CHART
+  ========================== */
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
   const gradient = ctx.createLinearGradient(0,0,0,360);
@@ -54,17 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* ---------- DATA ---------- */
-  async function fetchSeries(pair) {
-    let range = '';
-    if (currentRange !== 'all') {
+  /* ==========================
+     FETCH HELPERS
+  ========================== */
+  async function fetchSeries(pair, limit = null) {
+    let q = '';
+    if (currentRange !== 'all' && !limit) {
       const d = new Date(Date.now() - currentRange * 86400000)
         .toISOString().split('T')[0];
-      range = `&rate_date=gte.${d}`;
+      q += `&rate_date=gte.${d}`;
     }
+    if (limit) q += `&limit=${limit}`;
 
     const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${range}&order=rate_date.asc`,
+      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${q}&order=rate_date.asc`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
     return await r.json();
@@ -78,7 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return await r.json();
   }
 
-  /* ---------- UPDATE ---------- */
+  /* ==========================
+     HEADER UPDATE
+  ========================== */
   async function updateHeader(pair) {
     const d = await fetchLastTwo(pair);
     if (!d.length) return;
@@ -91,48 +109,83 @@ document.addEventListener('DOMContentLoaded', () => {
     if (prev) {
       const ch = ((last - prev) / prev) * 100;
       productChange.textContent = `${ch>=0?'+':''}${ch.toFixed(2)}%`;
-      productPrice.className = `price ${ch>0?'up':'down'}`;
-      productChange.className = `change ${ch>0?'up':'down'}`;
+      productPrice.className  = `price ${ch>=0?'up':'down'}`;
+      productChange.className = `change ${ch>=0?'up':'down'}`;
     }
   }
 
+  /* ==========================
+     SIDEBAR + SPARKLINES
+  ========================== */
   async function updateSidebar() {
-    document.querySelectorAll('.ticker').forEach(async t => {
-      const d = await fetchLastTwo(t.dataset.pair);
-      if (!d.length) return;
 
-      const last = +d[0].value;
-      const prev = d[1] ? +d[1].value : null;
+    tickers.forEach(async t => {
 
-      let cls = 'neutral';
-      let txt = last.toFixed(2);
+      const pair = t.dataset.pair;
+      const deltaEl = t.querySelector('.delta');
+      const canvas  = t.querySelector('.sparkline');
+      const sctx    = canvas.getContext('2d');
 
-      if (prev) {
-        const ch = ((last - prev) / prev) * 100;
-        cls = ch>0?'up':ch<0?'down':'neutral';
-        txt += ` · ${ch>=0?'+':''}${ch.toFixed(2)}%`;
-      }
+      const data = await fetchSeries(pair, 30);
+      if (data.length < 2) return;
 
-      t.querySelector('.delta').textContent = txt;
-      t.querySelector('.delta').className = `delta ${cls}`;
+      const values = data.map(x => +x.value);
+      const last = values.at(-1);
+      const prev = values.at(-2);
+
+      const ch = ((last - prev) / prev) * 100;
+      const cls = ch>0?'up':ch<0?'down':'neutral';
+
+      deltaEl.textContent =
+        `${last.toFixed(2)} · ${ch>=0?'+':''}${ch.toFixed(2)}%`;
+      deltaEl.className = `delta ${cls}`;
+
+      // sparkline
+      new Chart(sctx, {
+        type: 'line',
+        data: {
+          labels: values.map((_,i)=>i),
+          datasets: [{
+            data: values,
+            borderColor: ch>=0 ? '#1a7f37' : '#b42318',
+            borderWidth: 1,
+            tension: 0.3,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false }},
+          scales: {
+            x: { display: false },
+            y: { display: false }
+          }
+        }
+      });
+
     });
   }
 
+  /* ==========================
+     MAIN CHART UPDATE
+  ========================== */
   async function updateChart() {
     const d = await fetchSeries(primaryPair);
     if (!d.length) return;
 
     chart.data.labels = d.map(x=>x.rate_date);
     chart.data.datasets[0].data = d.map(x=>+x.value);
-
     chart.update();
+
     updateHeader(primaryPair);
   }
 
-  /* ---------- EVENTS ---------- */
-  document.querySelectorAll('.ticker').forEach(t => {
+  /* ==========================
+     EVENTS
+  ========================== */
+  tickers.forEach(t => {
     t.addEventListener('click', () => {
-      document.querySelectorAll('.ticker').forEach(x=>x.classList.remove('active'));
+      tickers.forEach(x=>x.classList.remove('active'));
       t.classList.add('active');
       primaryPair = t.dataset.pair;
       productTitle.textContent = t.dataset.name;
@@ -142,14 +195,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.ranges button').forEach(b => {
     b.addEventListener('click', () => {
-      document.querySelectorAll('.ranges button').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.ranges button')
+        .forEach(x=>x.classList.remove('active'));
       b.classList.add('active');
       currentRange = b.dataset.range;
       updateChart();
     });
   });
 
-  /* ---------- INIT ---------- */
+  /* ==========================
+     INIT
+  ========================== */
   updateChart();
   updateSidebar();
 
