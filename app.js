@@ -7,12 +7,28 @@ document.addEventListener('DOMContentLoaded', () => {
   let comparePair = null;
   let currentRange = 'all';
 
-  // 🔹 HITOS
+  /* =====================
+     HITOS
+  ===================== */
   const hitos = [
     { fecha: '2024-09-30', texto: 'Opening C24, 3.75' },
     { fecha: '2025-09-29', texto: 'Op. C25, 4.10' }
   ];
 
+  /* =====================
+     SIDEBAR – RESTAURAR TEXTOS
+  ===================== */
+  document.querySelectorAll('.ticker').forEach(ticker => {
+    ticker.querySelector('.label').textContent = ticker.dataset.name;
+  });
+
+  const productTitle = document.getElementById('productTitle');
+  productTitle.textContent =
+    document.querySelector('.ticker.active').dataset.name;
+
+  /* =====================
+     CHART
+  ===================== */
   const canvas = document.getElementById('currencyChart');
   const ctx = canvas.getContext('2d');
 
@@ -24,10 +40,34 @@ document.addEventListener('DOMContentLoaded', () => {
   gradientCompare.addColorStop(0, 'rgba(120,124,135,0.1)');
   gradientCompare.addColorStop(1, 'rgba(120,124,135,0)');
 
-  // Chart
   const chart = new Chart(ctx, {
     type: 'line',
-    data: { labels: [], datasets: [] },
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Principal',
+          data: [],
+          borderColor: '#12151c',
+          backgroundColor: gradientMain,
+          borderWidth: 0.6,
+          tension: 0.28,
+          fill: true,
+          pointRadius: 0
+        },
+        {
+          label: 'Comparación',
+          data: [],
+          borderColor: '#7a7f8a',
+          backgroundColor: gradientCompare,
+          borderWidth: 0.6,
+          tension: 0.28,
+          fill: false,
+          pointRadius: 0,
+          hidden: true
+        }
+      ]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -39,88 +79,101 @@ document.addEventListener('DOMContentLoaded', () => {
           backgroundColor: '#12151c',
           titleColor: '#fff',
           bodyColor: '#fff',
-          displayColors: false,
-          callbacks: {
-            title: items => new Date(items[0].label).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
-            label: ctx => `${ctx.dataset.label}: ${Number(ctx.parsed.y).toFixed(2)}`
-          }
+          displayColors: false
         }
       },
       scales: {
         x: { grid: { display: false } },
-        y: { position: 'right', grace: '15%', ticks: { precision: 2, callback: v => Number(v).toFixed(2) } }
+        y: {
+          position: 'right',
+          grace: '15%',
+          ticks: { callback: v => v.toFixed(2) }
+        }
       }
-    },
-    plugins: [Chart.registry.getPlugin('annotation')]
+    }
   });
 
   async function fetchSeries(pair) {
     let rangeFilter = '';
     if (currentRange !== 'all') {
-      const fromDate = new Date(Date.now() - currentRange * 86400000).toISOString().split('T')[0];
+      const fromDate = new Date(Date.now() - currentRange * 86400000)
+        .toISOString().split('T')[0];
       rangeFilter = `&rate_date=gte.${fromDate}`;
     }
-    const url = `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${rangeFilter}&order=rate_date.asc`;
-    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${rangeFilter}&order=rate_date.asc`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    );
     return await res.json();
   }
 
   function buildAnnotations(labels, values) {
     const annotations = {};
     hitos.forEach((h, i) => {
-      // Buscar índice más cercano
-      let closestIndex = 0, minDiff = Infinity;
-      labels.forEach((l, idx) => {
-        const diff = Math.abs(new Date(l) - new Date(h.fecha));
-        if (diff < minDiff) { minDiff = diff; closestIndex = idx; }
-      });
+      let idx = labels.reduce((best, l, j) =>
+        Math.abs(new Date(l) - new Date(h.fecha)) <
+        Math.abs(new Date(labels[best]) - new Date(h.fecha)) ? j : best, 0);
 
       annotations[`hito_${i}`] = {
         type: 'line',
-        xMin: labels[closestIndex],
-        xMax: labels[closestIndex],
+        xMin: labels[idx],
+        xMax: labels[idx],
         borderColor: 'rgba(139,0,0,0.35)',
         borderWidth: 0.6,
-        borderDash: [2, 4],
-        label: {
-          enabled: false,
-          position: 'start',
-          backgroundColor: 'rgba(139,0,0,0.85)',
-          color: '#fff',
-          font: { size: 9, weight: '500' },
-          padding: 4,
-          content: `${values[closestIndex].toFixed(2)} – ${h.texto}`,
-          display: ctx => ctx.hovered
-        }
+        borderDash: [2, 4]
       };
     });
     return annotations;
   }
 
   async function updateChart() {
-    const mainData = await fetchSeries(primaryPair);
-    if (!mainData.length) return;
+    const data = await fetchSeries(primaryPair);
+    if (!data.length) return;
 
-    const labels = mainData.map(d => d.rate_date);
-    const mainValues = mainData.map(d => Number(d.value));
+    const labels = data.map(d => d.rate_date);
+    const values = data.map(d => +d.value);
 
     chart.data.labels = labels;
-    chart.data.datasets = [
-      { label: 'Principal', data: mainValues, borderColor: '#12151c', backgroundColor: gradientMain, borderWidth: 0.6, tension: 0.28, fill: true, pointRadius: 0, pointHoverRadius: 3 },
-      { label: 'Comparación', data: [], borderColor: '#7a7f8a', backgroundColor: gradientCompare, borderWidth: 0.6, tension: 0.28, fill: false, pointRadius: 0, pointHoverRadius: 3, hidden: true }
-    ];
-
-    chart.options.plugins.annotation.annotations = buildAnnotations(labels, mainValues);
-
-    const min = Math.min(...mainValues);
-    const max = Math.max(...mainValues);
-    const pad = (max - min) * 0.15 || 0.1;
-    chart.options.scales.y.min = min - pad;
-    chart.options.scales.y.max = max + pad;
+    chart.data.datasets[0].data = values;
+    chart.options.plugins.annotation.annotations =
+      buildAnnotations(labels, values);
 
     chart.update();
   }
 
-  // Inicializar
+  /* =====================
+     INTERACCIÓN SIDEBAR
+  ===================== */
+  document.querySelectorAll('.ticker').forEach(ticker => {
+    const pair = ticker.dataset.pair;
+
+    ticker.addEventListener('click', () => {
+      document.querySelectorAll('.ticker')
+        .forEach(t => t.classList.remove('active'));
+      ticker.classList.add('active');
+
+      primaryPair = pair;
+      comparePair = null;
+
+      productTitle.textContent = ticker.dataset.name;
+      updateChart();
+    });
+  });
+
+  document.querySelectorAll('.ranges button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ranges button')
+        .forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      currentRange = btn.dataset.range;
+      updateChart();
+    });
+  });
+
+  /* =====================
+     INIT
+  ===================== */
   updateChart();
 });
