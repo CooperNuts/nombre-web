@@ -1,13 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* =====================
-     CONFIG
-  ===================== */
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
   let primaryPair = 'USDLB_STD';
-  let comparePair = null;
   let currentRange = 'all';
 
   const hitos = [
@@ -15,222 +11,146 @@ document.addEventListener('DOMContentLoaded', () => {
     { fecha: '2025-09-29', texto: 'Op. C25, 4.10' }
   ];
 
-  /* =====================
-     SIDEBAR + TÍTULOS
-  ===================== */
+  /* ---------- UI ---------- */
   const productTitle = document.getElementById('productTitle');
-  const productPriceEl = document.getElementById('productPrice');
-  const productChangeEl = document.getElementById('productChange');
+  const productPrice = document.getElementById('productPrice');
+  const productChange = document.getElementById('productChange');
 
-  document.querySelectorAll('.ticker').forEach(ticker => {
-    ticker.querySelector('.label').textContent = ticker.dataset.name;
+  document.querySelectorAll('.ticker').forEach(t => {
+    t.querySelector('.label').textContent = t.dataset.name;
   });
 
   productTitle.textContent =
     document.querySelector('.ticker.active').dataset.name;
 
-  /* =====================
-     CHART SETUP
-  ===================== */
-  const canvas = document.getElementById('currencyChart');
-  const ctx = canvas.getContext('2d');
+  /* ---------- CHART ---------- */
+  const ctx = document.getElementById('currencyChart').getContext('2d');
 
-  const gradientMain = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradientMain.addColorStop(0, 'rgba(18,21,28,0.12)');
-  gradientMain.addColorStop(1, 'rgba(18,21,28,0)');
-
-  const gradientCompare = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradientCompare.addColorStop(0, 'rgba(120,124,135,0.1)');
-  gradientCompare.addColorStop(1, 'rgba(120,124,135,0)');
+  const gradient = ctx.createLinearGradient(0,0,0,360);
+  gradient.addColorStop(0,'rgba(18,21,28,0.12)');
+  gradient.addColorStop(1,'rgba(18,21,28,0)');
 
   const chart = new Chart(ctx, {
     type: 'line',
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: 'Principal',
-          data: [],
-          borderColor: '#12151c',
-          backgroundColor: gradientMain,
-          borderWidth: 0.6,
-          tension: 0.28,
-          fill: true,
-          pointRadius: 0
-        },
-        {
-          label: 'Comparación',
-          data: [],
-          borderColor: '#7a7f8a',
-          backgroundColor: gradientCompare,
-          borderWidth: 0.6,
-          tension: 0.28,
-          fill: false,
-          pointRadius: 0,
-          hidden: true
-        }
-      ]
-    },
+    data: { labels: [], datasets: [{
+      data: [],
+      borderColor: '#12151c',
+      backgroundColor: gradient,
+      fill: true,
+      tension: 0.28,
+      pointRadius: 0
+    }]},
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
-        annotation: { annotations: {} },
-        tooltip: {
-          backgroundColor: '#12151c',
-          titleColor: '#fff',
-          bodyColor: '#fff',
-          displayColors: false
-        }
+        annotation: { annotations: {} }
       },
       scales: {
-        x: { grid: { display: false } },
-        y: {
-          position: 'right',
-          grace: '15%',
-          ticks: { callback: v => v.toFixed(2) }
-        }
+        x: { grid: { display: false }},
+        y: { position: 'right' }
       }
     }
   });
 
-  /* =====================
-     DATA FETCH
-  ===================== */
+  /* ---------- DATA ---------- */
   async function fetchSeries(pair) {
-    let rangeFilter = '';
+    let range = '';
     if (currentRange !== 'all') {
-      const fromDate = new Date(Date.now() - currentRange * 86400000)
+      const d = new Date(Date.now() - currentRange * 86400000)
         .toISOString().split('T')[0];
-      rangeFilter = `&rate_date=gte.${fromDate}`;
+      range = `&rate_date=gte.${d}`;
     }
 
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${rangeFilter}&order=rate_date.asc`,
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${range}&order=rate_date.asc`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
-    return await res.json();
+    return await r.json();
   }
 
-  async function fetchLatestPrices(pair) {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}&order=rate_date.desc&limit=2`,
+  async function fetchLastTwo(pair) {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=2`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
-    return await res.json();
+    return await r.json();
   }
 
-  /* =====================
-     HITOS
-  ===================== */
-  function buildAnnotations(labels) {
-    const annotations = {};
-    hitos.forEach((h, i) => {
-      const idx = labels.reduce((best, l, j) =>
-        Math.abs(new Date(l) - new Date(h.fecha)) <
-        Math.abs(new Date(labels[best]) - new Date(h.fecha)) ? j : best, 0);
+  /* ---------- UPDATE ---------- */
+  async function updateHeader(pair) {
+    const d = await fetchLastTwo(pair);
+    if (!d.length) return;
 
-      annotations[`hito_${i}`] = {
-        type: 'line',
-        xMin: labels[idx],
-        xMax: labels[idx],
-        borderColor: 'rgba(139,0,0,0.35)',
-        borderWidth: 0.6,
-        borderDash: [2, 4]
-      };
+    const last = +d[0].value;
+    const prev = d[1] ? +d[1].value : null;
+
+    productPrice.textContent = last.toFixed(2);
+
+    if (prev) {
+      const ch = ((last - prev) / prev) * 100;
+      productChange.textContent = `${ch>=0?'+':''}${ch.toFixed(2)}%`;
+      productPrice.className = `price ${ch>0?'up':'down'}`;
+      productChange.className = `change ${ch>0?'up':'down'}`;
+    }
+  }
+
+  async function updateSidebar() {
+    document.querySelectorAll('.ticker').forEach(async t => {
+      const d = await fetchLastTwo(t.dataset.pair);
+      if (!d.length) return;
+
+      const last = +d[0].value;
+      const prev = d[1] ? +d[1].value : null;
+
+      let cls = 'neutral';
+      let txt = last.toFixed(2);
+
+      if (prev) {
+        const ch = ((last - prev) / prev) * 100;
+        cls = ch>0?'up':ch<0?'down':'neutral';
+        txt += ` · ${ch>=0?'+':''}${ch.toFixed(2)}%`;
+      }
+
+      t.querySelector('.delta').textContent = txt;
+      t.querySelector('.delta').className = `delta ${cls}`;
     });
-    return annotations;
   }
 
-  /* =====================
-     HEADER PRICE
-  ===================== */
-  async function updateHeaderPrice(pair) {
-    const data = await fetchLatestPrices(pair);
-    if (!data.length) return;
-
-    const last = +data[0].value;
-    const prev = data[1] ? +data[1].value : null;
-
-    productPriceEl.textContent = last.toFixed(2);
-
-    if (prev !== null) {
-      const change = ((last - prev) / prev) * 100;
-      productChangeEl.textContent =
-        `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-
-      productPriceEl.className =
-        `price ${change > 0 ? 'up' : change < 0 ? 'down' : 'neutral'}`;
-      productChangeEl.className =
-        `change ${change > 0 ? 'up' : change < 0 ? 'down' : 'neutral'}`;
-    }
-  }
-
-  /* =====================
-     UPDATE CHART
-  ===================== */
   async function updateChart() {
-    const data = await fetchSeries(primaryPair);
-    if (!data.length) return;
+    const d = await fetchSeries(primaryPair);
+    if (!d.length) return;
 
-    const labels = data.map(d => d.rate_date);
-    const values = data.map(d => +d.value);
-
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = values;
-
-    chart.options.plugins.annotation.annotations =
-      buildAnnotations(labels);
+    chart.data.labels = d.map(x=>x.rate_date);
+    chart.data.datasets[0].data = d.map(x=>+x.value);
 
     chart.update();
-    updateHeaderPrice(primaryPair);
+    updateHeader(primaryPair);
   }
 
-  /* =====================
-     INTERACTIONS
-  ===================== */
-  document.querySelectorAll('.ticker').forEach(ticker => {
-    const pair = ticker.dataset.pair;
-    const checkbox = ticker.querySelector('.compare-checkbox');
-
-    ticker.addEventListener('click', e => {
-      if (e.target === checkbox) return;
-
-      document.querySelectorAll('.ticker')
-        .forEach(t => t.classList.remove('active'));
-      ticker.classList.add('active');
-
-      primaryPair = pair;
-      comparePair = null;
-      document.querySelectorAll('.compare-checkbox')
-        .forEach(cb => cb.checked = false);
-
-      productTitle.textContent = ticker.dataset.name;
-      updateChart();
-    });
-
-    checkbox.addEventListener('change', () => {
-      comparePair = checkbox.checked ? pair : null;
-      chart.data.datasets[1].hidden = !comparePair;
+  /* ---------- EVENTS ---------- */
+  document.querySelectorAll('.ticker').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.ticker').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      primaryPair = t.dataset.pair;
+      productTitle.textContent = t.dataset.name;
       updateChart();
     });
   });
 
-  document.querySelectorAll('.ranges button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.ranges button')
-        .forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      currentRange = btn.dataset.range;
+  document.querySelectorAll('.ranges button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.ranges button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      currentRange = b.dataset.range;
       updateChart();
     });
   });
 
-  /* =====================
-     INIT
-  ===================== */
+  /* ---------- INIT ---------- */
   updateChart();
+  updateSidebar();
+
 });
