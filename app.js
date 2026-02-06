@@ -175,46 +175,70 @@ document.addEventListener('DOMContentLoaded', () => {
      SIDEBAR + SPARKLINES
   ========================== */
   async function updateSidebar() {
-    tickers.forEach(async t => {
+  tickers.forEach(async t => {
 
-      const pair = t.dataset.pair;
-      const deltaEl = t.querySelector('.delta');
-      const canvas  = t.querySelector('.sparkline');
-      const sctx    = canvas.getContext('2d');
+    const pair = t.dataset.pair;
+    const deltaEl = t.querySelector('.delta');
+    const canvas  = t.querySelector('.sparkline');
+    const sctx    = canvas.getContext('2d');
 
-      const data = await fetchSeries(pair, 30);
-      if (data.length < 2) return;
+    /* ===== PRECIO ACTUAL (HOY vs AYER) ===== */
+    const lastTwo = await fetchLastTwo(pair);
+    if (!lastTwo.length) return;
 
-      const values = data.map(x => +x.value);
-      const last = values.at(-1);
-      const prev = values.at(-2);
-      const ch = ((last - prev) / prev) * 100;
+    const last = +lastTwo[0].value;
+    const prev = lastTwo[1] ? +lastTwo[1].value : null;
 
-      deltaEl.textContent =
-        `${last.toFixed(2)} · ${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
-      deltaEl.className = `delta ${ch > 0 ? 'up' : 'down'}`;
+    let ch = 0;
+    let cls = 'neutral';
 
-      new Chart(sctx, {
-        type: 'line',
-        data: {
-          labels: values.map((_, i) => i),
-          datasets: [{
-            data: values,
-            borderColor: ch >= 0 ? '#1a7f37' : '#b42318',
-            borderWidth: 1,
-            tension: 0.3,
-            pointRadius: 0
-          }]
+    if (prev !== null) {
+      ch = ((last - prev) / prev) * 100;
+      cls = ch > 0 ? 'up' : ch < 0 ? 'down' : 'neutral';
+    }
+
+    deltaEl.textContent =
+      `${last.toFixed(2)} · ${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+    deltaEl.className = `delta ${cls}`;
+
+    /* ===== SPARKLINE (HISTÓRICO) ===== */
+    const series = await fetchSeries(pair, 30);
+    if (series.length < 2) return;
+
+    const values = series.map(x => +x.value);
+
+    new Chart(sctx, {
+      type: 'line',
+      data: {
+        labels: values.map((_, i) => i),
+        datasets: [{
+          data: values,
+          borderColor: cls === 'up'
+            ? '#1a7f37'
+            : cls === 'down'
+            ? '#b42318'
+            : '#6b7280',
+          borderWidth: 1,
+          tension: 0.3,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
         },
-        options: {
-          responsive: false,
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          scales: { x: { display: false }, y: { display: false } }
+        scales: {
+          x: { display: false },
+          y: { display: false }
         }
-      });
-
+      }
     });
-  }
+
+  });
+}
+
 
   /* ==========================
      MAIN CHART UPDATE
