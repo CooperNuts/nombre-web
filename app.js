@@ -30,7 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
 
-  const tickers = document.querySelectorAll('.ticker');
+  const allTickers = document.querySelectorAll('.ticker');
+
+  const tickers = Array.from(allTickers).filter(t => {
+    if (!ACTIVE_PAIRS.includes(t.dataset.pair)) {
+      t.style.display = 'none'; // los oculta
+      return false;
+    }
+    return true;
+  });
+  ;
 
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
