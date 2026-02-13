@@ -3,17 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
-  let primaryPair = ACTIVE_PAIRS[0];
+  let primaryPair = 'USDLB_STD';
   let currentRange = 'all';
-
-
-  const ACTIVE_PAIRS = [
-  'USDLB_STD',
-  'USDLB_LARGE',
-  'USDLB_KERNEL'
-  // 'EURKG_ES2125',
-  // 'EURKG_ESKERNEL'
-];
 
   /* ==========================
      HITOS IMPORTANTES
@@ -30,16 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
 
-  const allTickers = document.querySelectorAll('.ticker');
-
-  const tickers = Array.from(allTickers).filter(t => {
-    if (!ACTIVE_PAIRS.includes(t.dataset.pair)) {
-      t.style.display = 'none'; // los oculta
-      return false;
-    }
-    return true;
-  });
-  ;
+  const tickers = document.querySelectorAll('.ticker');
 
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
@@ -256,7 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   });
 }
-
 
   /* ==========================
      MAIN CHART UPDATE
