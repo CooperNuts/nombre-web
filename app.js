@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
-  let primaryPair = 'USDLB_STD';
+  let primaryPair = ACTIVE_PAIRS[0];
   let currentRange = 'all';
 
 
