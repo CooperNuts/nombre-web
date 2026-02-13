@@ -6,6 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let primaryPair = 'USDLB_STD';
   let currentRange = 'all';
 
+
+  const ACTIVE_PAIRS = [
+  'USDLB_STD',
+  'USDLB_LARGE',
+  'USDLB_KERNEL'
+  // 'EURKG_ES2125',
+  // 'EURKG_ESKERNEL'
+];
+
   /* ==========================
      HITOS IMPORTANTES
   ========================== */
