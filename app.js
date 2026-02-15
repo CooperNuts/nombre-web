@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
     deltaEl.className = `delta ${cls}`;
 
     /* ===== SPARKLINE (HISTÓRICO) ===== */
-    const series = await fetchSeries(pair, 30);
+    const series = await fetchSeries(pair, 180);
     if (series.length < 2) return;
 
     const values = series.map(x => +x.value);
