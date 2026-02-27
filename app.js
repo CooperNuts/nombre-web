@@ -23,14 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const tickers = document.querySelectorAll('.ticker');
 
+  // Actualiza solo las etiquetas, sin crear canvas
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 220;
-    canvas.height = 40;
-    canvas.className = 'sparkline';
-    t.appendChild(canvas);
   });
 
   productTitle.textContent =
@@ -135,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const annotations = {};
 
     hitos.forEach((h, i) => {
-
       let idx = labels.findIndex(l => l >= h.fecha);
       if (idx === -1) return;
 
@@ -146,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
         borderColor: 'rgba(139,0,0,0.45)',
         borderWidth: 0.6,
         borderDash: [2, 4],
-
         label: {
           display: false,
           content: `${h.texto} · ${values[idx].toFixed(2)}`,
@@ -156,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
           padding: 6,
           position: 'start'
         },
-
         enter({ element }) {
           element.label.options.display = true;
           return true;
@@ -172,72 +164,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ==========================
-     SIDEBAR + SPARKLINES
+     SIDEBAR UPDATE (sin sparklines)
   ========================== */
   async function updateSidebar() {
-  tickers.forEach(async t => {
+    tickers.forEach(async t => {
+      const pair = t.dataset.pair;
+      const deltaEl = t.querySelector('.delta');
 
-    const pair = t.dataset.pair;
-    const deltaEl = t.querySelector('.delta');
-    const canvas  = t.querySelector('.sparkline');
-    const sctx    = canvas.getContext('2d');
+      const lastTwo = await fetchLastTwo(pair);
+      if (!lastTwo.length) return;
 
-    /* ===== PRECIO ACTUAL (HOY vs AYER) ===== */
-    const lastTwo = await fetchLastTwo(pair);
-    if (!lastTwo.length) return;
+      const last = +lastTwo[0].value;
+      const prev = lastTwo[1] ? +lastTwo[1].value : null;
 
-    const last = +lastTwo[0].value;
-    const prev = lastTwo[1] ? +lastTwo[1].value : null;
+      let ch = 0;
+      let cls = 'neutral';
 
-    let ch = 0;
-    let cls = 'neutral';
-
-    if (prev !== null) {
-      ch = ((last - prev) / prev) * 100;
-      cls = ch > 0 ? 'up' : ch < 0 ? 'down' : 'neutral';
-    }
-
-    deltaEl.textContent =
-      `${last.toFixed(2)} · ${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
-    deltaEl.className = `delta ${cls}`;
-
-    /* ===== SPARKLINE (HISTÓRICO) ===== */
-    const series = await fetchSeries(pair, 120);
-    if (series.length < 2) return;
-
-    const values = series.map(x => +x.value);
-
-    new Chart(sctx, {
-      type: 'line',
-      data: {
-        labels: values.map((_, i) => i),
-        datasets: [{
-          data: values,
-          borderColor: cls === 'up'
-            ? '#1a7f37'
-            : cls === 'down'
-            ? '#b42318'
-            : '#6b7280',
-          borderWidth: 1,
-          tension: 0.3,
-          pointRadius: 0
-        }]
-      },
-      options: {
-        responsive: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false }
-        },
-        scales: {
-          x: { display: false },
-          y: { display: false }
-        }
+      if (prev !== null) {
+        ch = ((last - prev) / prev) * 100;
+        cls = ch > 0 ? 'up' : ch < 0 ? 'down' : 'neutral';
       }
-    });
 
-  });
-}
+      deltaEl.textContent =
+        `${last.toFixed(2)} · ${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+      deltaEl.className = `delta ${cls}`;
+    });
+  }
 
   /* ==========================
      MAIN CHART UPDATE
