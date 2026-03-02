@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
      HITOS IMPORTANTES
   ========================== */
   const hitos = [
+    { fecha: '2023-10-02', texto: 'Op. C23' },
     { fecha: '2024-09-30', texto: 'Op. C24' },
     { fecha: '2025-09-29', texto: 'Op. C25' }
   ];
