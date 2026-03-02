@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const tickers = document.querySelectorAll('.ticker');
 
-  // Actualiza solo las etiquetas, sin crear canvas
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
@@ -90,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (limit) q += `&limit=${limit}`;
 
     const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${q}&order=rate_date.asc`,
+      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${q}&order=rate_date.asc&limit=10000`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
     return await r.json();
@@ -116,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     productPrice.textContent = last.toFixed(2);
 
-    if (prev) {
+    if (prev !== null) {
       const ch = ((last - prev) / prev) * 100;
       productChange.textContent = `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
       productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
@@ -165,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ==========================
-     SIDEBAR UPDATE (sin sparklines)
+     SIDEBAR UPDATE
   ========================== */
   async function updateSidebar() {
     tickers.forEach(async t => {
