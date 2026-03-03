@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
-
   const tickers = document.querySelectorAll('.ticker');
 
   tickers.forEach(t => {
@@ -79,26 +78,52 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ==========================
      FETCH HELPERS
   ========================== */
-  async function fetchSeries(pair, limit = null) {
-    let q = '';
-    if (currentRange !== 'all' && !limit) {
-      const d = new Date(Date.now() - currentRange * 86400000)
-        .toISOString().split('T')[0];
-      q += `&rate_date=gte.${d}`;
-    }
-    if (limit) q += `&limit=${limit}`;
+  async function fetchSeries(pair) {
 
-    const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${q}&order=rate_date.asc&limit=10000`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    let query = '';
+    let order = 'rate_date.asc';
+
+    // Si NO es ALL → filtrar por rango
+    if (currentRange !== 'all') {
+      const days = parseInt(currentRange, 10);
+      const fromDate = new Date(Date.now() - days * 86400000)
+        .toISOString()
+        .split('T')[0];
+
+      query += `&rate_date=gte.${fromDate}`;
+    }
+
+    // Si es ALL → traer últimos registros primero
+    if (currentRange === 'all') {
+      order = 'rate_date.desc';
+      query += `&limit=20000`;
+    }
+
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${query}&order=${order}`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
     );
-    return await r.json();
+
+    const data = await response.json();
+
+    // En ALL invertimos para que quede cronológico
+    return currentRange === 'all' ? data.reverse() : data;
   }
 
   async function fetchLastTwo(pair) {
     const r = await fetch(
       `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=2`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
     );
     return await r.json();
   }
@@ -117,7 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (prev !== null) {
       const ch = ((last - prev) / prev) * 100;
-      productChange.textContent = `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+      productChange.textContent =
+        `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+
       productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
       productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
     }
