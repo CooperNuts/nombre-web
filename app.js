@@ -76,14 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ==========================
-     FETCH HELPERS
+     FETCH SERIES (FIX DEFINITIVO)
   ========================== */
   async function fetchSeries(pair) {
 
     let query = '';
     let order = 'rate_date.asc';
 
-    // Si NO es ALL → filtrar por rango
     if (currentRange !== 'all') {
       const days = parseInt(currentRange, 10);
       const fromDate = new Date(Date.now() - days * 86400000)
@@ -93,26 +92,18 @@ document.addEventListener('DOMContentLoaded', () => {
       query += `&rate_date=gte.${fromDate}`;
     }
 
-    // Si es ALL → traer últimos registros primero
-    if (currentRange === 'all') {
-      order = 'rate_date.desc';
-      query += `&limit=20000`;
-    }
-
     const response = await fetch(
       `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${query}&order=${order}`,
       {
         headers: {
           apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Range: currentRange === 'all' ? '0-50000' : '0-1000'
         }
       }
     );
 
-    const data = await response.json();
-
-    // En ALL invertimos para que quede cronológico
-    return currentRange === 'all' ? data.reverse() : data;
+    return await response.json();
   }
 
   async function fetchLastTwo(pair) {
