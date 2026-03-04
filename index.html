@@ -1,60 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pistachio Market Insights</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1"></script>
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+
+  <link rel="icon" href="/PISTACHIODRAWING.jpg" type="image/x-icon">
+
+
 </head>
+
 <body>
 
-  <div class="page">
+<header class="header">
+  <h1>Pistachio Market Insights</h1>
+  <h2 class="subtitle">From data to decisions</h2>
+</header>
 
-    <h1 class="page-title">Pistachio Market Insights</h1>
+<main>
 
-    <!-- SELECTOR SUPERIOR -->
-    <div class="top-selector">
-      <div class="ticker active" data-pair="USDLB_STD" data-name="Std. Size USX1 USD/LB FAS Calif.">
-        <div class="label"></div>
-        <div class="delta"></div>
+  <aside class="sidebar">
+
+    <div class="ticker active" data-pair="USDLB_STD" data-name="Std. Size USX1 USDLB FAS Calif.">
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
+    <div class="ticker" data-pair="USDLB_LARGE" data-name="Large Size USX1 USDLB FAS Calif.">
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
+    <div class="ticker" data-pair="USDLB_KERNEL" data-name="Kernel W80 USX1 USDLB FAS Calif.">
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
+    <div class="ticker" data-pair="EURKG_ES2125" data-name="ES 21/25 EURKG EXW Toledo">
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
+    <div class="ticker" data-pair="EURKG_ESKERNEL" data-name="ES Kernel EURKG EXW Toledo">
+      <span class="label"></span>
+      <span class="delta"></span>
+    </div>
+
+  </aside>
+
+  <section class="content">
+    <div class="card">
+
+      <h2 id="productTitle"></h2>
+      <div class="price" id="productPrice"></div>
+      <div class="change" id="productChange"></div>
+
+      <div class="ranges">
+        <button data-range="7">7D</button>
+        <button data-range="30">1M</button>
+        <button data-range="90">3M</button>
+        <button data-range="365">1Y</button>
+        <button data-range="all" class="active">ALL</button>
       </div>
 
-      <div class="ticker" data-pair="USDLB_LARGE" data-name="Large Size USD/LB">
-        <div class="label"></div>
-        <div class="delta"></div>
+      <div class="chart-wrapper">
+        <canvas id="currencyChart"></canvas>
       </div>
+
     </div>
+  </section>
 
-    <!-- PRECIO -->
-    <div class="price-header">
-      <div id="productTitle" class="product-title"></div>
-      <div class="price-row">
-        <span id="productPrice" class="price"></span>
-        <span id="productChange" class="change"></span>
-      </div>
-    </div>
+</main>
 
-    <!-- RANGOS -->
-    <div class="ranges">
-      <button data-range="7">1W</button>
-      <button data-range="30">1M</button>
-      <button data-range="365">1Y</button>
-      <button data-range="all" class="active">ALL</button>
-    </div>
+<footer class="footer">
+  <p>© 2025 · E. Lagarda</p>
 
-    <!-- GRÁFICO -->
-    <div class="chart-container">
-      <canvas id="currencyChart"></canvas>
-    </div>
+   <p class="disclaimer">
+    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only. Under no circumstances shall they be construed as firm, binding, or contractual offers. The indicated prices are derived from information gathered from various publicly available and industry-relevant sources. While reasonable efforts are made to ensure accuracy, no representation or warranty is given as to the completeness, reliability, or timeliness of such information. These prices do not take into account specific conditions related to product availability, logistics, contractual volumes, quality specifications, or individual payment terms, all of which may have a material impact on actual commercial offers. I love pistachios - not sure about the vice versa.
+  </p>
+  
+</footer>
 
-    <!-- FOOTER -->
-    <footer>
-      © 2026 Pistachio Market Insights · Data FAS California
-    </footer>
-
-  </div>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
