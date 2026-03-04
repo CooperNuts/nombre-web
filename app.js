@@ -6,18 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let primaryPair = 'USDLB_STD';
   let currentRange = 'all';
 
-  /* ==========================
-     HITOS IMPORTANTES
-  ========================== */
   const hitos = [
     { fecha: '2023-10-02', texto: 'Op. C23' },
     { fecha: '2024-09-30', texto: 'Op. C24' },
     { fecha: '2025-09-29', texto: 'Op. C25' }
   ];
 
-  /* ==========================
-     UI ELEMENTS
-  ========================== */
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
@@ -30,9 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
   productTitle.textContent =
     document.querySelector('.ticker.active').dataset.name;
 
-  /* ==========================
-     MAIN CHART
-  ========================== */
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
   const gradient = ctx.createLinearGradient(0, 0, 0, 360);
@@ -44,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     data: {
       labels: [],
       datasets: [{
-        label: 'Price',
         data: [],
         borderColor: '#12151c',
         backgroundColor: gradient,
@@ -75,15 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* ==========================
-     FETCH HELPERS
-  ========================== */
   async function fetchSeries(pair) {
 
     let query = '';
-    let order = 'rate_date.asc';
+    let order = 'rate_date.desc';
+    let limit = 1000;
 
-    // Si NO es ALL → filtrar por rango
     if (currentRange !== 'all') {
       const days = parseInt(currentRange, 10);
       const fromDate = new Date(Date.now() - days * 86400000)
@@ -91,16 +78,14 @@ document.addEventListener('DOMContentLoaded', () => {
         .split('T')[0];
 
       query += `&rate_date=gte.${fromDate}`;
-    }
-
-    // Si es ALL → traer últimos registros primero
-    if (currentRange === 'all') {
-      order = 'rate_date.desc';
-      query += `&limit=20000`;
+      order = 'rate_date.asc';
+    } else {
+      // 🔥 En ALL traemos solo últimos 3000 registros
+      limit = 3000;
     }
 
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${query}&order=${order}`,
+      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${query}&order=${order}&limit=${limit}`,
       {
         headers: {
           apikey: SUPABASE_KEY,
@@ -111,7 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const data = await response.json();
 
-    // En ALL invertimos para que quede cronológico
     return currentRange === 'all' ? data.reverse() : data;
   }
 
@@ -128,9 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return await r.json();
   }
 
-  /* ==========================
-     HEADER UPDATE
-  ========================== */
   async function updateHeader(pair) {
     const d = await fetchLastTwo(pair);
     if (!d.length) return;
@@ -150,9 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ==========================
-     HITOS → ANNOTATIONS
-  ========================== */
   function buildHitos(labels, values) {
     const annotations = {};
 
@@ -166,61 +144,13 @@ document.addEventListener('DOMContentLoaded', () => {
         xMax: labels[idx],
         borderColor: 'rgba(139,0,0,0.45)',
         borderWidth: 0.6,
-        borderDash: [2, 4],
-        label: {
-          display: false,
-          content: `${h.texto} · ${values[idx].toFixed(2)}`,
-          backgroundColor: 'rgba(139,0,0,0.9)',
-          color: '#fff',
-          font: { size: 11, weight: '500' },
-          padding: 6,
-          position: 'start'
-        },
-        enter({ element }) {
-          element.label.options.display = true;
-          return true;
-        },
-        leave({ element }) {
-          element.label.options.display = false;
-          return true;
-        }
+        borderDash: [2, 4]
       };
     });
 
     return annotations;
   }
 
-  /* ==========================
-     SIDEBAR UPDATE
-  ========================== */
-  async function updateSidebar() {
-    tickers.forEach(async t => {
-      const pair = t.dataset.pair;
-      const deltaEl = t.querySelector('.delta');
-
-      const lastTwo = await fetchLastTwo(pair);
-      if (!lastTwo.length) return;
-
-      const last = +lastTwo[0].value;
-      const prev = lastTwo[1] ? +lastTwo[1].value : null;
-
-      let ch = 0;
-      let cls = 'neutral';
-
-      if (prev !== null) {
-        ch = ((last - prev) / prev) * 100;
-        cls = ch > 0 ? 'up' : ch < 0 ? 'down' : 'neutral';
-      }
-
-      deltaEl.textContent =
-        `${last.toFixed(2)} · ${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
-      deltaEl.className = `delta ${cls}`;
-    });
-  }
-
-  /* ==========================
-     MAIN CHART UPDATE
-  ========================== */
   async function updateChart() {
     const d = await fetchSeries(primaryPair);
     if (!d.length) return;
@@ -237,9 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHeader(primaryPair);
   }
 
-  /* ==========================
-     EVENTS
-  ========================== */
   tickers.forEach(t => {
     t.addEventListener('click', () => {
       tickers.forEach(x => x.classList.remove('active'));
@@ -260,10 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ==========================
-     INIT
-  ========================== */
   updateChart();
-  updateSidebar();
 
 });
