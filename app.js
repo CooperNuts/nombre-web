@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data: [],
         borderColor: '#12151c',
         backgroundColor: gradient,
-        borderWidth: 0.4,
+        borderWidth: 0.8,
         fill: true,
         tension: 0.28,
         pointRadius: 0
@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
       query += `&rate_date=gte.${fromDate}`;
       order = 'rate_date.asc';
     } else {
-      // 🔥 En ALL traemos solo últimos 3000 registros
       limit = 3000;
     }
 
@@ -94,8 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     );
 
-    const data = await response.json();
+    if (!response.ok) {
+      console.error('Error fetching series');
+      return [];
+    }
 
+    const data = await response.json();
     return currentRange === 'all' ? data.reverse() : data;
   }
 
@@ -109,6 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     );
+
+    if (!r.ok) return [];
+
     return await r.json();
   }
 
@@ -123,15 +129,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (prev !== null) {
       const ch = ((last - prev) / prev) * 100;
-      productChange.textContent =
-        `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+      const formatted = `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
 
+      productChange.textContent = formatted;
       productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
       productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
+
+      // 🔥 Actualiza delta pequeño del ticker activo
+      const activeTicker = document.querySelector('.ticker.active');
+      const deltaEl = activeTicker.querySelector('.delta');
+      deltaEl.textContent = formatted;
+      deltaEl.className = `delta ${ch >= 0 ? 'up' : 'down'}`;
     }
   }
 
-  function buildHitos(labels, values) {
+  function buildHitos(labels) {
     const annotations = {};
 
     hitos.forEach((h, i) => {
@@ -161,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
     chart.options.plugins.annotation.annotations =
-      buildHitos(labels, values);
+      buildHitos(labels);
 
     chart.update();
     updateHeader(primaryPair);
