@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
           pointRadius: 0
         },
 
-        // 🔴 DATASET PARA LOS HITOS (PUNTOS ROJOS)
+        // 🔴 Dataset para los hitos (puntos rojos)
         {
           label: 'Hitos',
           data: [],
@@ -56,16 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
           pointBorderColor: '#8b0000',
           pointBorderWidth: 2
         }
-
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'nearest', intersect: false },
+      interaction: { mode: 'nearest', intersect: true },
       plugins: {
         legend: { display: false },
-
         tooltip: {
           backgroundColor: '#12151c',
           titleColor: '#fff',
@@ -73,16 +71,13 @@ document.addEventListener('DOMContentLoaded', () => {
           displayColors: false,
           callbacks: {
             label: function(context) {
-
               if (context.dataset.label === 'Hitos') {
                 return context.raw.hito + ' — ' + context.raw.y.toFixed(2);
               }
-
               return context.raw.toFixed(2);
             }
           }
         },
-
         annotation: { annotations: {} }
       },
       scales: {
@@ -93,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function fetchSeries(pair) {
-
     let query = '';
     let order = 'rate_date.desc';
     let limit = 1000;
@@ -139,9 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     );
-
     if (!r.ok) return [];
-
     return await r.json();
   }
 
@@ -170,39 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildHitos(labels, values) {
-
-    const annotations = {};
+    const annotations = [];
     const puntos = [];
 
-    hitos.forEach((h, i) => {
-
-      let idx = labels.findIndex(l => l >= h.fecha);
+    hitos.forEach(h => {
+      const idx = labels.findIndex(l => l >= h.fecha);
       if (idx === -1) return;
 
       const precio = values[idx];
-
-      // 🔴 línea vertical
-      annotations[`hito_${i}`] = {
-        type: 'line',
-        xMin: labels[idx],
-        xMax: labels[idx],
-        borderColor: 'rgba(139,0,0,0.45)',
-        borderWidth: 0.6,
-        borderDash: [2, 4]
-      };
-
-      // 🔴 etiqueta roja
-      annotations[`label_${i}`] = {
-        type: 'label',
-        xValue: labels[idx],
-        yValue: precio,
-        backgroundColor: 'rgba(200,0,0,0.9)',
-        color: '#fff',
-        content: `${h.texto} ${precio.toFixed(2)}`,
-        font: { size: 10 },
-        padding: 6,
-        borderRadius: 4
-      };
 
       // 🔴 punto rojo
       puntos.push({
@@ -211,11 +178,23 @@ document.addEventListener('DOMContentLoaded', () => {
         hito: h.texto
       });
 
+      // 🔴 línea vertical solo visible al hover del punto (usando tooltip)
+      annotations.push({
+        type: 'line',
+        xMin: labels[idx],
+        xMax: labels[idx],
+        borderColor: 'rgba(139,0,0,0.2)',
+        borderWidth: 1,
+        borderDash: [2, 4]
+      });
     });
 
     chart.data.datasets[1].data = puntos;
 
-    return annotations;
+    return annotations.reduce((obj, item, i) => {
+      obj[`hito_${i}`] = item;
+      return obj;
+    }, {});
   }
 
   async function updateChart() {
