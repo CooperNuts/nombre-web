@@ -5,8 +5,18 @@ body {
   color: #12151c;
 }
 
+/* HEADER */
+
 .header {
-  padding: 24px 32px;
+  padding: 24px 32px 0 32px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .header h1 {
@@ -20,54 +30,69 @@ body {
   color: #555;
 }
 
-main {
-  display: flex;
-  gap: 24px;
-  padding: 0 32px;
-}
+/* TICKERS */
 
-.sidebar {
-  width: 240px;
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .ticker {
-  padding: 12px;
-  margin-bottom: 8px;
+  padding: 8px 14px;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 999px;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.ticker:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
 .ticker.active {
-  outline: 2px solid #12151c;
+  background: #12151c;
+  color: #fff;
+}
+
+.ticker.active .delta {
+  color: inherit;
 }
 
 .ticker .label {
-  font-size: 0.9rem;
   font-weight: 500;
 }
 
 .ticker .delta {
-  font-size: 0.8rem;
   font-weight: 600;
+  font-size: 0.8rem;
 }
 
 .delta.up { color: #1a7f37; }
 .delta.down { color: #b42318; }
 .delta.neutral { color: #6b7280; }
 
+/* MAIN */
+
+main {
+  padding: 32px;
+}
+
 .content {
-  flex: 1;
+  width: 100%;
 }
 
 .card {
   background: #fff;
   border-radius: 16px;
-  padding: 24px;
+  padding: 32px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
@@ -78,13 +103,16 @@ main {
 
 .change {
   font-size: 0.9rem;
+  margin-bottom: 8px;
 }
 
 .price.up, .change.up { color: #1a7f37; }
 .price.down, .change.down { color: #b42318; }
 
+/* RANGE BUTTONS */
+
 .ranges {
-  margin: 16px 0;
+  margin: 20px 0;
 }
 
 .ranges button {
@@ -93,6 +121,7 @@ main {
   border-radius: 6px;
   border: none;
   cursor: pointer;
+  background: #eee;
 }
 
 .ranges button.active {
@@ -100,20 +129,24 @@ main {
   color: #fff;
 }
 
+/* CHART */
+
 .chart-wrapper {
-  height: 360px;
+  height: 480px;
 }
 
+/* FOOTER */
+
 footer {
-  margin-top: 120px;               /* separación clara del contenido */
+  margin-top: 120px;
   padding: 48px 32px 32px;
   background: #f7f7f8;
   border-top: 1px solid rgba(18, 21, 28, 0.08);
+  text-align: center;
 }
 
-.footer p,
 footer p {
-  margin: 0 auto;
+  margin: 8px auto;
   max-width: 1100px;
   font-size: 0.8rem;
   line-height: 1.6;
