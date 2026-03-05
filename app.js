@@ -34,15 +34,30 @@ document.addEventListener('DOMContentLoaded', () => {
     type: 'line',
     data: {
       labels: [],
-      datasets: [{
-        data: [],
-        borderColor: '#12151c',
-        backgroundColor: gradient,
-        borderWidth: 0.8,
-        fill: true,
-        tension: 0.28,
-        pointRadius: 0
-      }]
+      datasets: [
+        {
+          data: [],
+          borderColor: '#12151c',
+          backgroundColor: gradient,
+          borderWidth: 0.8,
+          fill: true,
+          tension: 0.28,
+          pointRadius: 0
+        },
+
+        // 🔴 DATASET PARA LOS HITOS (PUNTOS ROJOS)
+        {
+          label: 'Hitos',
+          data: [],
+          showLine: false,
+          pointRadius: 5,
+          pointHoverRadius: 8,
+          pointBackgroundColor: 'red',
+          pointBorderColor: '#8b0000',
+          pointBorderWidth: 2
+        }
+
+      ]
     },
     options: {
       responsive: true,
@@ -50,12 +65,24 @@ document.addEventListener('DOMContentLoaded', () => {
       interaction: { mode: 'nearest', intersect: false },
       plugins: {
         legend: { display: false },
+
         tooltip: {
           backgroundColor: '#12151c',
           titleColor: '#fff',
           bodyColor: '#fff',
-          displayColors: false
+          displayColors: false,
+          callbacks: {
+            label: function(context) {
+
+              if (context.dataset.label === 'Hitos') {
+                return context.raw.hito + ' — ' + context.raw.y.toFixed(2);
+              }
+
+              return context.raw.toFixed(2);
+            }
+          }
         },
+
         annotation: { annotations: {} }
       },
       scales: {
@@ -135,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
       productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
       productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
 
-      // 🔥 Actualiza delta pequeño del ticker activo
       const activeTicker = document.querySelector('.ticker.active');
       const deltaEl = activeTicker.querySelector('.delta');
       deltaEl.textContent = formatted;
@@ -143,13 +169,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function buildHitos(labels) {
+  function buildHitos(labels, values) {
+
     const annotations = {};
+    const puntos = [];
 
     hitos.forEach((h, i) => {
+
       let idx = labels.findIndex(l => l >= h.fecha);
       if (idx === -1) return;
 
+      const precio = values[idx];
+
+      // 🔴 línea vertical
       annotations[`hito_${i}`] = {
         type: 'line',
         xMin: labels[idx],
@@ -158,7 +190,30 @@ document.addEventListener('DOMContentLoaded', () => {
         borderWidth: 0.6,
         borderDash: [2, 4]
       };
+
+      // 🔴 etiqueta roja
+      annotations[`label_${i}`] = {
+        type: 'label',
+        xValue: labels[idx],
+        yValue: precio,
+        backgroundColor: 'rgba(200,0,0,0.9)',
+        color: '#fff',
+        content: `${h.texto} ${precio.toFixed(2)}`,
+        font: { size: 10 },
+        padding: 6,
+        borderRadius: 4
+      };
+
+      // 🔴 punto rojo
+      puntos.push({
+        x: labels[idx],
+        y: precio,
+        hito: h.texto
+      });
+
     });
+
+    chart.data.datasets[1].data = puntos;
 
     return annotations;
   }
@@ -172,8 +227,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
+
     chart.options.plugins.annotation.annotations =
-      buildHitos(labels);
+      buildHitos(labels, values);
 
     chart.update();
     updateHeader(primaryPair);
