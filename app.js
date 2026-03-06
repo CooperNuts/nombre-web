@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
           showLine: false,
           pointRadius: 5,
           pointHoverRadius: 8,
-          pointBackgroundColor: 'red',
-          pointBorderColor: '#8b0000',
+          pointBackgroundColor: '#6b0f1a',
+          pointBorderColor: '#4a0710',
           pointBorderWidth: 2
         }
       ]
