@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
           pointRadius: 0
         },
 
-        // 🔴 Dataset para los hitos (puntos rojos)
         {
           label: 'Hitos',
           data: [],
@@ -148,7 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (prev !== null) {
       const ch = ((last - prev) / prev) * 100;
-      const formatted = `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+      const arrow = ch >= 0 ? '▲' : '▼';
+      const formatted = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
 
       productChange.textContent = formatted;
       productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
@@ -156,6 +156,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const activeTicker = document.querySelector('.ticker.active');
       const deltaEl = activeTicker.querySelector('.delta');
+      deltaEl.textContent = formatted;
+      deltaEl.className = `delta ${ch >= 0 ? 'up' : 'down'}`;
+    }
+  }
+
+  async function updateAllTickers() {
+
+    for (const t of tickers) {
+
+      const pair = t.dataset.pair;
+
+      const r = await fetch(
+        `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=2`,
+        {
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`
+          }
+        }
+      );
+
+      if (!r.ok) continue;
+
+      const d = await r.json();
+      if (d.length < 2) continue;
+
+      const last = +d[0].value;
+      const prev = +d[1].value;
+
+      const ch = ((last - prev) / prev) * 100;
+      const arrow = ch >= 0 ? '▲' : '▼';
+
+      const formatted = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
+
+      const deltaEl = t.querySelector('.delta');
+
       deltaEl.textContent = formatted;
       deltaEl.className = `delta ${ch >= 0 ? 'up' : 'down'}`;
     }
@@ -171,14 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const precio = values[idx];
 
-      // 🔴 punto rojo
       puntos.push({
         x: labels[idx],
         y: precio,
         hito: h.texto
       });
 
-      // 🔴 línea vertical solo visible al hover del punto (usando tooltip)
       annotations.push({
         type: 'line',
         xMin: labels[idx],
@@ -235,5 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   updateChart();
+  updateAllTickers();
 
 });
