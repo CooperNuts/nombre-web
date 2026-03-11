@@ -152,3 +152,58 @@ footer p {
   line-height: 1.6;
   color: #8a8f98;
 }
+/* BLOOMBERG STYLE REPORT CARD */
+
+.report-card {
+  padding: 40px 32px 0;
+}
+
+.report-box {
+  max-width: 1100px;
+  margin: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.report-text {
+  max-width: 70%;
+}
+
+.report-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8f98;
+  margin-bottom: 6px;
+}
+
+.report-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.report-desc {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.report-button {
+  background: #12151c;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.report-button:hover {
+  opacity: 0.8;
+}
