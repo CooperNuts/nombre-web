@@ -306,58 +306,89 @@ footer p {
   line-height: 1.6;
   color: #8a8f98;
 }
-/* BLOOMBERG STYLE REPORT CARD */
+/* DASHBOARD RESOURCE CARDS */
 
-.report-card {
-  padding: 40px 32px 0;
+.dashboard-cards {
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+  padding: 48px 32px;
+  flex-wrap: wrap;
 }
 
-.report-box {
-  max-width: 1100px;
-  margin: auto;
+/* CARD */
+
+.report-card {
+  width: 300px;
   background: #ffffff;
   border-radius: 16px;
   padding: 28px 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.report-text {
-  max-width: 70%;
+/* CARD HOVER */
+
+.report-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.12);
 }
+
+/* LABEL */
 
 .report-label {
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #8a8f98;
-  margin-bottom: 6px;
 }
 
+/* TITLE */
+
 .report-title {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 4px;
+  line-height: 1.4;
 }
+
+/* DESCRIPTION */
 
 .report-desc {
   font-size: 0.9rem;
   color: #6b7280;
+  line-height: 1.5;
 }
+
+/* BUTTON */
 
 .report-button {
+  display: inline-block;
+  text-decoration: none;
+
   background: #12151c;
   color: #ffffff;
-  text-decoration: none;
+
   padding: 10px 18px;
   border-radius: 8px;
-  font-size: 0.9rem;
+
+  font-size: 0.85rem;
   font-weight: 500;
-  transition: opacity 0.2s ease;
+
+  opacity: 0;
+  transform: translateY(6px);
+
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-.report-button:hover {
-  opacity: 0.8;
+/* BUTTON APPEARS ON HOVER */
+
+.report-card:hover .report-button {
+  opacity: 1;
+  transform: translateY(0);
 }
