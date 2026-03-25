@@ -16,53 +16,42 @@ document.addEventListener('DOMContentLoaded', () => {
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
-
-  tickers.forEach(t => {
-    t.querySelector('.label').textContent = t.dataset.name;
-  });
-
-  productTitle.textContent =
-    document.querySelector('.ticker.active').dataset.name;
-
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
+  // Inicializar labels de tickers
+  tickers.forEach(t => t.querySelector('.label').textContent = t.dataset.name);
+  productTitle.textContent = document.querySelector('.ticker.active').dataset.name;
+
+  // Crear gradiente
   const gradient = ctx.createLinearGradient(0, 0, 0, 360);
   gradient.addColorStop(0, 'rgba(18,21,28,0.12)');
   gradient.addColorStop(1, 'rgba(18,21,28,0)');
 
-  const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: [],
-      datasets: [
-        {
-          data: [],
-          borderColor: '#12151c',
-          backgroundColor: gradient,
-          borderWidth: 0.8,
-          fill: true,
-          tension: 0.28,
-          pointRadius: 0
-        },
+  // Estado de visibilidad de las líneas USDLB
+  let usdVisible = { std: true, large: true };
 
-        {
-          label: 'Hitos',
-          data: [],
-          showLine: false,
-          pointRadius: 5,
-          pointHoverRadius: 8,
-          pointBackgroundColor: '#6b0f1a',
-          pointBorderColor: '#4a0710',
-          pointBorderWidth: 2
-        }
-      ]
-    },
+  // Gráfico inicial
+  let chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: [], datasets: [] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'nearest', intersect: true },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          onClick: function(e, legendItem, legend) {
+            const index = legendItem.datasetIndex;
+            if (legend.chart.data.datasets[index].label === 'Standard (USDLB)') {
+              usdVisible.std = !usdVisible.std;
+            }
+            if (legend.chart.data.datasets[index].label === 'Large (USDLB)') {
+              usdVisible.large = !usdVisible.large;
+            }
+            chart.update();
+          }
+        },
         tooltip: {
           backgroundColor: '#12151c',
           titleColor: '#fff',
@@ -86,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Fetch para un solo par
   async function fetchSeries(pair) {
     let query = '';
     let order = 'rate_date.desc';
@@ -94,9 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentRange !== 'all') {
       const days = parseInt(currentRange, 10);
       const fromDate = new Date(Date.now() - days * 86400000)
-        .toISOString()
-        .split('T')[0];
-
+        .toISOString().split('T')[0];
       query += `&rate_date=gte.${fromDate}`;
       order = 'rate_date.asc';
     } else {
@@ -105,37 +93,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const response = await fetch(
       `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${query}&order=${order}&limit=${limit}`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
-
-    if (!response.ok) {
-      console.error('Error fetching series');
-      return [];
-    }
-
+    if (!response.ok) return [];
     const data = await response.json();
     return currentRange === 'all' ? data.reverse() : data;
   }
 
+  // Fetch últimas dos para delta
   async function fetchLastTwo(pair) {
     const r = await fetch(
       `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=2`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
     if (!r.ok) return [];
     return await r.json();
   }
 
+  // Actualizar header y delta
   async function updateHeader(pair) {
     const d = await fetchLastTwo(pair);
     if (!d.length) return;
@@ -161,42 +136,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Actualizar todos los tickers
   async function updateAllTickers() {
-
     for (const t of tickers) {
-
       const pair = t.dataset.pair;
-
       const r = await fetch(
         `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=2`,
-        {
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`
-          }
-        }
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
-
       if (!r.ok) continue;
-
       const d = await r.json();
       if (d.length < 2) continue;
 
       const last = +d[0].value;
       const prev = +d[1].value;
-
       const ch = ((last - prev) / prev) * 100;
       const arrow = ch >= 0 ? '▲' : '▼';
-
       const formatted = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
 
       const deltaEl = t.querySelector('.delta');
-
       deltaEl.textContent = formatted;
       deltaEl.className = `delta ${ch >= 0 ? 'up' : 'down'}`;
     }
   }
 
+  // Hitos
   function buildHitos(labels, values) {
     const annotations = [];
     const puntos = [];
@@ -206,12 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (idx === -1) return;
 
       const precio = values[idx];
-
-      puntos.push({
-        x: labels[idx],
-        y: precio,
-        hito: h.texto
-      });
+      puntos.push({ x: labels[idx], y: precio, hito: h.texto });
 
       annotations.push({
         type: 'line',
@@ -223,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    chart.data.datasets[1].data = puntos;
+    chart.data.datasets.find(d => d.label === 'Hitos').data = puntos;
 
     return annotations.reduce((obj, item, i) => {
       obj[`hito_${i}`] = item;
@@ -231,6 +190,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }, {});
   }
 
+  // Función USDLB con toggle
+  async function updateUSDLBChart() {
+    const [stdData, largeData] = await Promise.all([
+      fetchSeries('USDLB_STD'),
+      fetchSeries('USDLB_LARGE')
+    ]);
+
+    if (!stdData.length) return;
+
+    const labels = stdData.map(d => d.rate_date);
+    const stdValues = usdVisible.std ? stdData.map(d => +d.value) : Array(stdData.length).fill(null);
+    const largeValues = usdVisible.large ? largeData.map(d => +d.value) : Array(largeData.length).fill(null);
+
+    chart.data.labels = labels;
+    chart.data.datasets = [
+      {
+        label: 'Standard (USDLB)',
+        data: stdValues,
+        borderColor: '#12151c',
+        backgroundColor: gradient,
+        borderWidth: 0.8,
+        fill: true,
+        tension: 0.28,
+        pointRadius: 0
+      },
+      {
+        label: 'Large (USDLB)',
+        data: largeValues,
+        borderColor: '#4a0710',
+        backgroundColor: 'rgba(107,15,26,0.1)',
+        borderWidth: 0.8,
+        fill: true,
+        tension: 0.28,
+        pointRadius: 0
+      },
+      {
+        label: 'Hitos',
+        data: [],
+        showLine: false,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointBackgroundColor: '#6b0f1a',
+        pointBorderColor: '#4a0710',
+        pointBorderWidth: 2
+      }
+    ];
+
+    chart.options.plugins.annotation.annotations = buildHitos(labels, stdData.map(d => +d.value));
+    chart.update();
+    updateHeader('USDLB_STD');
+  }
+
+  // Otros pares
   async function updateChart() {
     const d = await fetchSeries(primaryPair);
     if (!d.length) return;
@@ -239,36 +251,75 @@ document.addEventListener('DOMContentLoaded', () => {
     const values = d.map(x => +x.value);
 
     chart.data.labels = labels;
-    chart.data.datasets[0].data = values;
+    chart.data.datasets = [
+      {
+        label: primaryPair,
+        data: values,
+        borderColor: '#12151c',
+        backgroundColor: gradient,
+        borderWidth: 0.8,
+        fill: true,
+        tension: 0.28,
+        pointRadius: 0
+      },
+      {
+        label: 'Hitos',
+        data: [],
+        showLine: false,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointBackgroundColor: '#6b0f1a',
+        pointBorderColor: '#4a0710',
+        pointBorderWidth: 2
+      }
+    ];
 
-    chart.options.plugins.annotation.annotations =
-      buildHitos(labels, values);
-
+    chart.options.plugins.annotation.annotations = buildHitos(labels, values);
     chart.update();
     updateHeader(primaryPair);
   }
 
+  // Ticklers
   tickers.forEach(t => {
     t.addEventListener('click', () => {
       tickers.forEach(x => x.classList.remove('active'));
       t.classList.add('active');
-      primaryPair = t.dataset.pair;
       productTitle.textContent = t.dataset.name;
-      updateChart();
+
+      if (t.dataset.pair.startsWith('USDLB')) {
+        updateUSDLBChart();
+        primaryPair = 'USDLB_STD';
+      } else {
+        primaryPair = t.dataset.pair;
+        updateChart();
+      }
     });
   });
 
+  // Rangos
   document.querySelectorAll('.ranges button').forEach(b => {
     b.addEventListener('click', () => {
-      document.querySelectorAll('.ranges button')
-        .forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.ranges button').forEach(x => x.classList.remove('active'));
       b.classList.add('active');
       currentRange = b.dataset.range;
-      updateChart();
+
+      const activeTicker = document.querySelector('.ticker.active');
+      if (activeTicker.dataset.pair.startsWith('USDLB')) {
+        updateUSDLBChart();
+      } else {
+        updateChart();
+      }
     });
   });
 
-  updateChart();
+  // Inicialización
+  const activeTicker = document.querySelector('.ticker.active');
+  if (activeTicker.dataset.pair.startsWith('USDLB')) {
+    updateUSDLBChart();
+  } else {
+    primaryPair = activeTicker.dataset.pair;
+    updateChart();
+  }
   updateAllTickers();
 
 });
