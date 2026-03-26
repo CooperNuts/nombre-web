@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
       labels: [],
       datasets: [
         {
-          label: 'Standard',
           data: [],
           borderColor: '#12151c',
           backgroundColor: gradient,
@@ -45,16 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
           tension: 0.28,
           pointRadius: 0
         },
-        {
-          label: 'Large',
-          data: [],
-          borderColor: '#4a0710',
-          backgroundColor: 'rgba(107,15,26,0.1)',
-          borderWidth: 0.8,
-          fill: true,
-          tension: 0.28,
-          pointRadius: 0
-        },
+
         {
           label: 'Hitos',
           data: [],
@@ -72,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
       maintainAspectRatio: false,
       interaction: { mode: 'nearest', intersect: true },
       plugins: {
-        legend: { display: true },
+        legend: { display: false },
         tooltip: {
           backgroundColor: '#12151c',
           titleColor: '#fff',
@@ -123,7 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     );
 
-    if (!response.ok) return [];
+    if (!response.ok) {
+      console.error('Error fetching series');
+      return [];
+    }
 
     const data = await response.json();
     return currentRange === 'all' ? data.reverse() : data;
@@ -169,7 +162,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function updateAllTickers() {
+
     for (const t of tickers) {
+
       const pair = t.dataset.pair;
 
       const r = await fetch(
@@ -196,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formatted = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
 
       const deltaEl = t.querySelector('.delta');
+
       deltaEl.textContent = formatted;
       deltaEl.className = `delta ${ch >= 0 ? 'up' : 'down'}`;
     }
@@ -227,49 +223,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    chart.data.datasets[2].data = puntos;
+    chart.data.datasets[1].data = puntos;
 
     return annotations.reduce((obj, item, i) => {
       obj[`hito_${i}`] = item;
       return obj;
     }, {});
-  }
-
-  // 🔥 SOLUCIÓN REAL: SOLO FECHAS COMUNES
-  async function updateUSDLBChart() {
-
-    const [stdData, largeData] = await Promise.all([
-      fetchSeries('USDLB_STD'),
-      fetchSeries('USDLB_LARGE')
-    ]);
-
-    if (!stdData.length || !largeData.length) return;
-
-    const largeMap = new Map(
-      largeData.map(d => [d.rate_date, +d.value])
-    );
-
-    const labels = [];
-    const stdValues = [];
-    const largeValues = [];
-
-    stdData.forEach(d => {
-      if (largeMap.has(d.rate_date)) {
-        labels.push(d.rate_date);
-        stdValues.push(+d.value);
-        largeValues.push(largeMap.get(d.rate_date));
-      }
-    });
-
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = stdValues;
-    chart.data.datasets[1].data = largeValues;
-
-    chart.options.plugins.annotation.annotations =
-      buildHitos(labels, stdValues);
-
-    chart.update();
-    updateHeader('USDLB_STD');
   }
 
   async function updateChart() {
@@ -281,7 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
-    chart.data.datasets[1].data = [];
 
     chart.options.plugins.annotation.annotations =
       buildHitos(labels, values);
@@ -294,15 +252,9 @@ document.addEventListener('DOMContentLoaded', () => {
     t.addEventListener('click', () => {
       tickers.forEach(x => x.classList.remove('active'));
       t.classList.add('active');
-
+      primaryPair = t.dataset.pair;
       productTitle.textContent = t.dataset.name;
-
-      if (t.dataset.pair.startsWith('USDLB')) {
-        updateUSDLBChart();
-      } else {
-        primaryPair = t.dataset.pair;
-        updateChart();
-      }
+      updateChart();
     });
   });
 
@@ -310,21 +262,13 @@ document.addEventListener('DOMContentLoaded', () => {
     b.addEventListener('click', () => {
       document.querySelectorAll('.ranges button')
         .forEach(x => x.classList.remove('active'));
-
       b.classList.add('active');
       currentRange = b.dataset.range;
-
-      const active = document.querySelector('.ticker.active');
-
-      if (active.dataset.pair.startsWith('USDLB')) {
-        updateUSDLBChart();
-      } else {
-        updateChart();
-      }
+      updateChart();
     });
   });
 
-  updateUSDLBChart();
+  updateChart();
   updateAllTickers();
 
 });
