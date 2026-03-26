@@ -43,8 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
           borderWidth: 0.8,
           fill: true,
           tension: 0.28,
-          pointRadius: 0,
-          spanGaps: true
+          pointRadius: 0
         },
         {
           label: 'Large',
@@ -54,9 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
           borderWidth: 0.8,
           fill: true,
           tension: 0.28,
-          pointRadius: 0,
-          spanGaps: true,
-          hidden: true
+          pointRadius: 0
         },
         {
           label: 'Hitos',
@@ -86,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (context.dataset.label === 'Hitos') {
                 return context.raw.hito + ' — ' + context.raw.y.toFixed(2);
               }
-              return context.raw?.toFixed(2);
+              return context.raw.toFixed(2);
             }
           }
         },
@@ -94,11 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       scales: {
         x: { grid: { display: false } },
-        y: {
-          position: 'right',
-          grace: '15%',
-          beginAtZero: false
-        }
+        y: { position: 'right', grace: '15%' }
       }
     }
   });
@@ -130,10 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     );
 
-    if (!response.ok) {
-      console.error('Error fetching series');
-      return [];
-    }
+    if (!response.ok) return [];
 
     const data = await response.json();
     return currentRange === 'all' ? data.reverse() : data;
@@ -202,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const ch = ((last - prev) / prev) * 100;
       const arrow = ch >= 0 ? '▲' : '▼';
+
       const formatted = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
 
       const deltaEl = t.querySelector('.delta');
@@ -219,7 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (idx === -1) return;
 
       const precio = values[idx];
-      if (precio == null) return;
 
       puntos.push({
         x: labels[idx],
@@ -245,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, {});
   }
 
-  // 🔥 FUNCIÓN CLAVE CORREGIDA
+  // 🔥 SOLUCIÓN REAL: SOLO FECHAS COMUNES
   async function updateUSDLBChart() {
 
     const [stdData, largeData] = await Promise.all([
@@ -253,34 +243,30 @@ document.addEventListener('DOMContentLoaded', () => {
       fetchSeries('USDLB_LARGE')
     ]);
 
-    if (!stdData.length) return;
+    if (!stdData.length || !largeData.length) return;
 
-    const stdMap = new Map(stdData.map(d => [d.rate_date, +d.value]));
-    const largeMap = new Map(largeData.map(d => [d.rate_date, +d.value]));
-
-    const allDates = Array.from(new Set([
-      ...stdMap.keys(),
-      ...largeMap.keys()
-    ])).sort();
-
-    const stdValues = allDates.map(date =>
-      stdMap.has(date) ? stdMap.get(date) : null
+    const largeMap = new Map(
+      largeData.map(d => [d.rate_date, +d.value])
     );
 
-    const largeValues = allDates.map(date =>
-      largeMap.has(date) ? largeMap.get(date) : null
-    );
+    const labels = [];
+    const stdValues = [];
+    const largeValues = [];
 
-    chart.data.labels = allDates;
+    stdData.forEach(d => {
+      if (largeMap.has(d.rate_date)) {
+        labels.push(d.rate_date);
+        stdValues.push(+d.value);
+        largeValues.push(largeMap.get(d.rate_date));
+      }
+    });
 
+    chart.data.labels = labels;
     chart.data.datasets[0].data = stdValues;
-    chart.data.datasets[0].hidden = false;
-
     chart.data.datasets[1].data = largeValues;
-    chart.data.datasets[1].hidden = largeValues.every(v => v === null);
 
     chart.options.plugins.annotation.annotations =
-      buildHitos(allDates, stdValues);
+      buildHitos(labels, stdValues);
 
     chart.update();
     updateHeader('USDLB_STD');
@@ -294,12 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const values = d.map(x => +x.value);
 
     chart.data.labels = labels;
-
     chart.data.datasets[0].data = values;
-    chart.data.datasets[0].hidden = false;
-
     chart.data.datasets[1].data = [];
-    chart.data.datasets[1].hidden = true;
 
     chart.options.plugins.annotation.annotations =
       buildHitos(labels, values);
