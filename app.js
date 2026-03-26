@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
           fill: true,
           tension: 0.28,
           pointRadius: 0,
-          hidden: false
+          spanGaps: true
         },
         {
           label: 'Large',
@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
           fill: true,
           tension: 0.28,
           pointRadius: 0,
+          spanGaps: true,
           hidden: true
         },
         {
@@ -85,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (context.dataset.label === 'Hitos') {
                 return context.raw.hito + ' — ' + context.raw.y.toFixed(2);
               }
-              return context.raw.toFixed(2);
+              return context.raw?.toFixed(2);
             }
           }
         },
@@ -93,7 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       scales: {
         x: { grid: { display: false } },
-        y: { position: 'right', grace: '15%' }
+        y: {
+          position: 'right',
+          grace: '15%',
+          beginAtZero: false
+        }
       }
     }
   });
@@ -214,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (idx === -1) return;
 
       const precio = values[idx];
+      if (precio == null) return;
 
       puntos.push({
         x: labels[idx],
@@ -239,7 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }, {});
   }
 
+  // 🔥 FUNCIÓN CLAVE CORREGIDA
   async function updateUSDLBChart() {
+
     const [stdData, largeData] = await Promise.all([
       fetchSeries('USDLB_STD'),
       fetchSeries('USDLB_LARGE')
@@ -247,20 +255,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!stdData.length) return;
 
-    const labels = stdData.map(x => x.rate_date);
-    const stdValues = stdData.map(x => +x.value);
-    const largeValues = largeData.map(x => +x.value);
+    const stdMap = new Map(stdData.map(d => [d.rate_date, +d.value]));
+    const largeMap = new Map(largeData.map(d => [d.rate_date, +d.value]));
 
-    chart.data.labels = labels;
+    const allDates = Array.from(new Set([
+      ...stdMap.keys(),
+      ...largeMap.keys()
+    ])).sort();
+
+    const stdValues = allDates.map(date =>
+      stdMap.has(date) ? stdMap.get(date) : null
+    );
+
+    const largeValues = allDates.map(date =>
+      largeMap.has(date) ? largeMap.get(date) : null
+    );
+
+    chart.data.labels = allDates;
 
     chart.data.datasets[0].data = stdValues;
-    chart.data.datasets[0].hidden = false; // 🔥 SIEMPRE visible
+    chart.data.datasets[0].hidden = false;
 
     chart.data.datasets[1].data = largeValues;
-    chart.data.datasets[1].hidden = largeValues.length === 0; // 🔥 SOLO si hay datos
+    chart.data.datasets[1].hidden = largeValues.every(v => v === null);
 
     chart.options.plugins.annotation.annotations =
-      buildHitos(labels, stdValues);
+      buildHitos(allDates, stdValues);
 
     chart.update();
     updateHeader('USDLB_STD');
@@ -279,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chart.data.datasets[0].hidden = false;
 
     chart.data.datasets[1].data = [];
-    chart.data.datasets[1].hidden = true; // 🔥 CLAVE
+    chart.data.datasets[1].hidden = true;
 
     chart.options.plugins.annotation.annotations =
       buildHitos(labels, values);
