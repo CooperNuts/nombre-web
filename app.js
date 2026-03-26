@@ -43,7 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
           borderWidth: 0.8,
           fill: true,
           tension: 0.28,
-          pointRadius: 0
+          pointRadius: 0,
+          hidden: false
         },
         {
           label: 'Large',
@@ -54,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
           fill: true,
           tension: 0.28,
           pointRadius: 0,
-          hidden: true // 🔥 CLAVE: oculto por defecto
+          hidden: true
         },
         {
           label: 'Hitos',
@@ -251,10 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const largeValues = largeData.map(x => +x.value);
 
     chart.data.labels = labels;
-    chart.data.datasets[0].data = stdValues;
-    chart.data.datasets[1].data = largeValues;
 
-    chart.data.datasets[1].hidden = false; // 🔥 mostrar Large
+    chart.data.datasets[0].data = stdValues;
+    chart.data.datasets[0].hidden = false; // 🔥 SIEMPRE visible
+
+    chart.data.datasets[1].data = largeValues;
+    chart.data.datasets[1].hidden = largeValues.length === 0; // 🔥 SOLO si hay datos
 
     chart.options.plugins.annotation.annotations =
       buildHitos(labels, stdValues);
@@ -271,7 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const values = d.map(x => +x.value);
 
     chart.data.labels = labels;
+
     chart.data.datasets[0].data = values;
+    chart.data.datasets[0].hidden = false;
 
     chart.data.datasets[1].data = [];
     chart.data.datasets[1].hidden = true; // 🔥 CLAVE
@@ -317,7 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // INIT
   updateUSDLBChart();
   updateAllTickers();
 
