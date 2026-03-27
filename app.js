@@ -100,6 +100,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // 🔥 FUNCIÓN CRÍTICA: LIMPIA DATOS
+  function cleanSeries(data) {
+    return data
+      .map(d => ({
+        date: d.rate_date,
+        value: parseFloat(d.value)
+      }))
+      .filter(d => d.date && !isNaN(d.value));
+  }
+
   async function fetchSeries(pair) {
     let query = '';
     let order = 'rate_date.desc';
@@ -127,13 +137,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     );
 
-    if (!response.ok) {
-      console.error('Error fetching series', pair);
-      return [];
-    }
+    if (!response.ok) return [];
 
-    const data = await response.json();
-    return currentRange === 'all' ? data.reverse() : data;
+    const raw = await response.json();
+    const cleaned = cleanSeries(raw);
+
+    return currentRange === 'all' ? cleaned.reverse() : cleaned;
   }
 
   async function fetchLastTwo(pair) {
@@ -147,15 +156,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     );
     if (!r.ok) return [];
-    return await r.json();
+
+    const d = await r.json();
+    return d
+      .map(x => parseFloat(x.value))
+      .filter(v => !isNaN(v));
   }
 
   async function updateHeader(pair) {
     const d = await fetchLastTwo(pair);
-    if (!d.length) return;
+    if (d.length < 1) return;
 
-    const last = +d[0].value;
-    const prev = d[1] ? +d[1].value : null;
+    const last = d[0];
+    const prev = d[1] ?? null;
 
     productPrice.textContent = last.toFixed(2);
 
@@ -165,45 +178,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const formatted = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
 
       productChange.textContent = formatted;
-      productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
-      productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
-
-      const activeTicker = document.querySelector('.ticker.active');
-      const deltaEl = activeTicker.querySelector('.delta');
-      deltaEl.textContent = formatted;
-      deltaEl.className = `delta ${ch >= 0 ? 'up' : 'down'}`;
     }
   }
 
   async function updateAllTickers() {
     for (const t of tickers) {
+
       const pair = t.dataset.pair;
-
-      const r = await fetch(
-        `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=2`,
-        {
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`
-          }
-        }
-      );
-
-      if (!r.ok) continue;
-
-      const d = await r.json();
+      const d = await fetchLastTwo(pair);
       if (d.length < 2) continue;
 
-      const last = +d[0].value;
-      const prev = +d[1].value;
-
-      const ch = ((last - prev) / prev) * 100;
+      const ch = ((d[0] - d[1]) / d[1]) * 100;
       const arrow = ch >= 0 ? '▲' : '▼';
-      const formatted = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
 
       const deltaEl = t.querySelector('.delta');
-      deltaEl.textContent = formatted;
-      deltaEl.className = `delta ${ch >= 0 ? 'up' : 'down'}`;
+      deltaEl.textContent = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
     }
   }
 
@@ -218,11 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const precio = values[idx];
       if (precio == null) return;
 
-      puntos.push({
-        x: labels[idx],
-        y: precio,
-        hito: h.texto
-      });
+      puntos.push({ x: labels[idx], y: precio, hito: h.texto });
 
       annotations.push({
         type: 'line',
@@ -251,60 +236,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!stdData.length) return;
 
-    // 👉 fallback: solo Standard
-    if (!largeData.length) {
-      const labels = stdData.map(d => d.rate_date);
-      const values = stdData.map(d => +d.value);
+    const labels = stdData.map(d => d.date);
+    const stdValues = stdData.map(d => d.value);
 
-      chart.data.labels = labels;
-      chart.data.datasets[0].data = values;
-      chart.data.datasets[1].data = [];
-
-      chart.options.plugins.annotation.annotations =
-        buildHitos(labels, values);
-
-      chart.update();
-      updateHeader('USDLB_STD');
-      return;
-    }
-
-    const largeMap = new Map(
-      largeData.map(d => [d.rate_date, +d.value])
-    );
-
-    const labels = [];
-    const stdValues = [];
-    const largeValues = [];
-
-    stdData.forEach(d => {
-      if (largeMap.has(d.rate_date)) {
-        labels.push(d.rate_date);
-        stdValues.push(+d.value);
-        largeValues.push(largeMap.get(d.rate_date));
-      }
-    });
-
-    // 👉 fallback si no hay fechas comunes
-    if (!labels.length) {
-      const fallbackLabels = stdData.map(d => d.rate_date);
-      const fallbackValues = stdData.map(d => +d.value);
-
-      chart.data.labels = fallbackLabels;
-      chart.data.datasets[0].data = fallbackValues;
-      chart.data.datasets[1].data = [];
-
-      chart.options.plugins.annotation.annotations =
-        buildHitos(fallbackLabels, fallbackValues);
-
-      chart.update();
-      updateHeader('USDLB_STD');
-      return;
-    }
-
-    // 👉 caso normal (dos líneas)
     chart.data.labels = labels;
     chart.data.datasets[0].data = stdValues;
-    chart.data.datasets[1].data = largeValues;
+
+    if (largeData.length) {
+      const largeMap = new Map(largeData.map(d => [d.date, d.value]));
+
+      const largeValues = labels.map(date =>
+        largeMap.has(date) ? largeMap.get(date) : null
+      );
+
+      chart.data.datasets[1].data = largeValues;
+    } else {
+      chart.data.datasets[1].data = [];
+    }
 
     chart.options.plugins.annotation.annotations =
       buildHitos(labels, stdValues);
@@ -317,8 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = await fetchSeries(primaryPair);
     if (!d.length) return;
 
-    const labels = d.map(x => x.rate_date);
-    const values = d.map(x => +x.value);
+    const labels = d.map(x => x.date);
+    const values = d.map(x => x.value);
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
