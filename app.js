@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let globalData = [];
   let currentRange = 'all';
 
+  // ✅ Exponer para consola (debug)
+  window.globalData = globalData;
+
   const hitos = [
     { fecha: '2023-10-02', texto: 'Op. C23' },
     { fecha: '2024-09-30', texto: 'Op. C24' },
@@ -93,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 🔌 FETCH
+  // 🔌 FETCH SUPABASE
   async function fetchAllData() {
     let url = `${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.asc`;
 
@@ -106,18 +109,34 @@ document.addEventListener('DOMContentLoaded', () => {
       url += `&fecha=gte.${fromDate}`;
     }
 
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
+    try {
+      const res = await fetch(url, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      });
+
+      if (!res.ok) {
+        console.error("Supabase error:", res.status);
+        return [];
       }
-    });
 
-    if (!res.ok) return [];
+      const data = await res.json();
 
-    return await res.json();
+      // ✅ actualizar globalData + debug
+      globalData = data;
+      window.globalData = globalData;
+
+      return data;
+
+    } catch (err) {
+      console.error("Fetch error:", err);
+      return [];
+    }
   }
 
+  // 🎯 HITOS
   function buildHitos(labels, values) {
     const annotations = [];
     const puntos = [];
@@ -149,13 +168,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }, {});
   }
 
+  // 📊 UPDATE CHART
   function updateChart() {
     if (!globalData.length) return;
 
     const active = document.querySelector('.ticker.active');
     const column = active.dataset.column;
 
-    // ✅ Limpieza robusta de datos
+    // ✅ limpiar datos correctamente
     const raw = globalData
       .map(d => ({
         date: d.fecha,
@@ -251,9 +271,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 🚀 INIT
   async function init() {
+    console.log("Initializing app...");
+
     globalData = await fetchAllData();
 
-    if (!globalData.length) return;
+    if (!globalData.length) {
+      console.warn("No data received from Supabase");
+      return;
+    }
 
     updateAllTickers();
     updateChart();
