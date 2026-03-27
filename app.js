@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
 
-  // 👉 Inicializar labels
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
@@ -84,14 +83,17 @@ document.addEventListener('DOMContentLoaded', () => {
         x: { grid: { display: false } },
         y: {
           position: 'right',
-          grace: '15%',
-          beginAtZero: false
+          grace: '10%',
+          beginAtZero: false,
+          ticks: {
+            precision: 2
+          }
         }
       }
     }
   });
 
-  // 🔌 FETCH ÚNICO (tabla pistachio1)
+  // 🔌 FETCH
   async function fetchAllData() {
     let url = `${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.asc`;
 
@@ -153,8 +155,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const active = document.querySelector('.ticker.active');
     const column = active.dataset.column;
 
-    const labels = globalData.map(d => d.fecha);
-    const values = globalData.map(d => parseFloat(d[column]));
+    // ✅ Limpieza robusta de datos
+    const raw = globalData
+      .map(d => ({
+        date: d.fecha,
+        value: parseFloat(d[column])
+      }))
+      .filter(d => !isNaN(d.value));
+
+    const labels = raw.map(d => d.date);
+    const values = raw.map(d => d.value);
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
@@ -168,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateHeader() {
-    if (globalData.length < 1) return;
+    if (globalData.length < 2) return;
 
     const active = document.querySelector('.ticker.active');
     const column = active.dataset.column;
@@ -211,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 🎯 EVENTOS TICKERS
+  // 🎯 TICKERS CLICK
   tickers.forEach(t => {
     t.addEventListener('click', () => {
       tickers.forEach(x => x.classList.remove('active'));
@@ -223,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 📅 RANGOS
+  // 📅 RANGES
   document.querySelectorAll('.ranges button').forEach(b => {
     b.addEventListener('click', async () => {
       document.querySelectorAll('.ranges button')
