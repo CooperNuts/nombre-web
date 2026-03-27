@@ -8,6 +8,11 @@
   <meta name="description" content="Indicative pistachio price signals and market trends for California and Spain markets.">
 
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js (CARGA PRIMERO) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+
   <link rel="icon" href="/favicon-256x256.png" type="image/x-icon">
 </head>
 
@@ -22,39 +27,27 @@
 
     <div class="top-bar">
 
-      <!-- TICKERS (con data-column correcto) -->
-
-      <div class="ticker active"
-           data-column="usdlb_std"
-           data-name="Std. Size USX1 USDLB FAS Calif.">
+      <div class="ticker active" data-column="usdlb_std" data-name="Std. Size USX1 USDLB FAS Calif.">
         <span class="label"></span>
         <span class="delta"></span>
       </div>
 
-      <div class="ticker"
-           data-column="usdlb_large"
-           data-name="Large Size USX1 USDLB FAS Calif.">
+      <div class="ticker" data-column="usdlb_large" data-name="Large Size USX1 USDLB FAS Calif.">
         <span class="label"></span>
         <span class="delta"></span>
       </div>
 
-      <div class="ticker"
-           data-column="usdlb_kernel"
-           data-name="Kernel W80 USX1 USDLB FAS Calif.">
+      <div class="ticker" data-column="usdlb_kernel" data-name="Kernel W80 USX1 USDLB FAS Calif.">
         <span class="label"></span>
         <span class="delta"></span>
       </div>
 
-      <div class="ticker"
-           data-column="eurkg_es2125"
-           data-name="ES 21/25 EURKG EXW Toledo">
+      <div class="ticker" data-column="eurkg_es2125" data-name="ES 21/25 EURKG EXW Toledo">
         <span class="label"></span>
         <span class="delta"></span>
       </div>
 
-      <div class="ticker"
-           data-column="eurkg_eskernel"
-           data-name="ES Kernel EURKG EXW Toledo">
+      <div class="ticker" data-column="eurkg_eskernel" data-name="ES Kernel EURKG EXW Toledo">
         <span class="label"></span>
         <span class="delta"></span>
       </div>
@@ -115,7 +108,7 @@
   <p>© 2025 · E. Lagarda.</p>
 
   <p class="disclaimer">
-    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only. Under no circumstances shall they be construed as firm, binding, or contractual offers.
+    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only.
   </p>
 
   <p class="disclaimer">
@@ -123,12 +116,7 @@
   </p>
 </footer>
 
-<!-- ✅ LIBRERÍAS (orden correcto, SIN defer) -->
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
-
-<!-- TU APP -->
+<!-- TU JS AL FINAL -->
 <script src="app.js"></script>
 
 </body>
