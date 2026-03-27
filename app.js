@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_9aXVVpDd5YGd5nIRh27v_g_04494V6s';
 
-  let primaryPair = 'USDLB_STD';
+  let globalData = [];
   let currentRange = 'all';
 
   const hitos = [
@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
 
+  // 👉 Inicializar labels
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
@@ -36,20 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
       labels: [],
       datasets: [
         {
-          label: 'Standard',
+          label: 'Price',
           data: [],
           borderColor: '#12151c',
           backgroundColor: gradient,
-          borderWidth: 0.8,
-          fill: true,
-          tension: 0.28,
-          pointRadius: 0
-        },
-        {
-          label: 'Large',
-          data: [],
-          borderColor: '#4a0710',
-          backgroundColor: 'rgba(107,15,26,0.1)',
           borderWidth: 0.8,
           fill: true,
           tension: 0.28,
@@ -100,20 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 🔥 FUNCIÓN CRÍTICA: LIMPIA DATOS
-  function cleanSeries(data) {
-    return data
-      .map(d => ({
-        date: d.rate_date,
-        value: parseFloat(d.value)
-      }))
-      .filter(d => d.date && !isNaN(d.value));
-  }
-
-  async function fetchSeries(pair) {
-    let query = '';
-    let order = 'rate_date.desc';
-    let limit = 1000;
+  // 🔌 FETCH ÚNICO (tabla pistachio1)
+  async function fetchAllData() {
+    let url = `${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.asc`;
 
     if (currentRange !== 'all') {
       const days = parseInt(currentRange, 10);
@@ -121,79 +101,19 @@ document.addEventListener('DOMContentLoaded', () => {
         .toISOString()
         .split('T')[0];
 
-      query += `&rate_date=gte.${fromDate}`;
-      order = 'rate_date.asc';
-    } else {
-      limit = 3000;
+      url += `&fecha=gte.${fromDate}`;
     }
 
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/us_std?select=rate_date,value&pair=eq.${pair}${query}&order=${order}&limit=${limit}`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
       }
-    );
+    });
 
-    if (!response.ok) return [];
+    if (!res.ok) return [];
 
-    const raw = await response.json();
-    const cleaned = cleanSeries(raw);
-
-    return currentRange === 'all' ? cleaned.reverse() : cleaned;
-  }
-
-  async function fetchLastTwo(pair) {
-    const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/us_std?select=value&pair=eq.${pair}&order=rate_date.desc&limit=2`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-    if (!r.ok) return [];
-
-    const d = await r.json();
-    return d
-      .map(x => parseFloat(x.value))
-      .filter(v => !isNaN(v));
-  }
-
-  async function updateHeader(pair) {
-    const d = await fetchLastTwo(pair);
-    if (d.length < 1) return;
-
-    const last = d[0];
-    const prev = d[1] ?? null;
-
-    productPrice.textContent = last.toFixed(2);
-
-    if (prev !== null) {
-      const ch = ((last - prev) / prev) * 100;
-      const arrow = ch >= 0 ? '▲' : '▼';
-      const formatted = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
-
-      productChange.textContent = formatted;
-    }
-  }
-
-  async function updateAllTickers() {
-    for (const t of tickers) {
-
-      const pair = t.dataset.pair;
-      const d = await fetchLastTwo(pair);
-      if (d.length < 2) continue;
-
-      const ch = ((d[0] - d[1]) / d[1]) * 100;
-      const arrow = ch >= 0 ? '▲' : '▼';
-
-      const deltaEl = t.querySelector('.delta');
-      deltaEl.textContent = `${arrow} ${Math.abs(ch).toFixed(2)}%`;
-    }
+    return await res.json();
   }
 
   function buildHitos(labels, values) {
@@ -219,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    chart.data.datasets[2].data = puntos;
+    chart.data.datasets[1].data = puntos;
 
     return annotations.reduce((obj, item, i) => {
       obj[`hito_${i}`] = item;
@@ -227,58 +147,71 @@ document.addEventListener('DOMContentLoaded', () => {
     }, {});
   }
 
-  async function updateUSDLBChart() {
+  function updateChart() {
+    if (!globalData.length) return;
 
-    const [stdData, largeData] = await Promise.all([
-      fetchSeries('USDLB_STD'),
-      fetchSeries('USDLB_LARGE')
-    ]);
+    const active = document.querySelector('.ticker.active');
+    const column = active.dataset.column;
 
-    if (!stdData.length) return;
-
-    const labels = stdData.map(d => d.date);
-    const stdValues = stdData.map(d => d.value);
-
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = stdValues;
-
-    if (largeData.length) {
-      const largeMap = new Map(largeData.map(d => [d.date, d.value]));
-
-      const largeValues = labels.map(date =>
-        largeMap.has(date) ? largeMap.get(date) : null
-      );
-
-      chart.data.datasets[1].data = largeValues;
-    } else {
-      chart.data.datasets[1].data = [];
-    }
-
-    chart.options.plugins.annotation.annotations =
-      buildHitos(labels, stdValues);
-
-    chart.update();
-    updateHeader('USDLB_STD');
-  }
-
-  async function updateChart() {
-    const d = await fetchSeries(primaryPair);
-    if (!d.length) return;
-
-    const labels = d.map(x => x.date);
-    const values = d.map(x => x.value);
+    const labels = globalData.map(d => d.fecha);
+    const values = globalData.map(d => parseFloat(d[column]));
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
-    chart.data.datasets[1].data = [];
 
     chart.options.plugins.annotation.annotations =
       buildHitos(labels, values);
 
     chart.update();
-    updateHeader(primaryPair);
+
+    updateHeader();
   }
 
+  function updateHeader() {
+    if (globalData.length < 1) return;
+
+    const active = document.querySelector('.ticker.active');
+    const column = active.dataset.column;
+
+    const last = parseFloat(globalData.at(-1)[column]);
+    const prev = parseFloat(globalData.at(-2)?.[column]);
+
+    if (isNaN(last)) return;
+
+    productPrice.textContent = last.toFixed(2);
+
+    if (!isNaN(prev)) {
+      const ch = ((last - prev) / prev) * 100;
+      const arrow = ch >= 0 ? '▲' : '▼';
+
+      productChange.textContent =
+        `${arrow} ${Math.abs(ch).toFixed(2)}%`;
+    }
+  }
+
+  function updateAllTickers() {
+    if (globalData.length < 2) return;
+
+    const last = globalData.at(-1);
+    const prev = globalData.at(-2);
+
+    tickers.forEach(t => {
+      const column = t.dataset.column;
+
+      const v1 = parseFloat(last[column]);
+      const v2 = parseFloat(prev[column]);
+
+      if (isNaN(v1) || isNaN(v2)) return;
+
+      const ch = ((v1 - v2) / v2) * 100;
+      const arrow = ch >= 0 ? '▲' : '▼';
+
+      t.querySelector('.delta').textContent =
+        `${arrow} ${Math.abs(ch).toFixed(2)}%`;
+    });
+  }
+
+  // 🎯 EVENTOS TICKERS
   tickers.forEach(t => {
     t.addEventListener('click', () => {
       tickers.forEach(x => x.classList.remove('active'));
@@ -286,34 +219,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
       productTitle.textContent = t.dataset.name;
 
-      if (t.dataset.pair.startsWith('USDLB')) {
-        updateUSDLBChart();
-      } else {
-        primaryPair = t.dataset.pair;
-        updateChart();
-      }
+      updateChart();
     });
   });
 
+  // 📅 RANGOS
   document.querySelectorAll('.ranges button').forEach(b => {
-    b.addEventListener('click', () => {
+    b.addEventListener('click', async () => {
       document.querySelectorAll('.ranges button')
         .forEach(x => x.classList.remove('active'));
 
       b.classList.add('active');
       currentRange = b.dataset.range;
 
-      const active = document.querySelector('.ticker.active');
+      globalData = await fetchAllData();
 
-      if (active.dataset.pair.startsWith('USDLB')) {
-        updateUSDLBChart();
-      } else {
-        updateChart();
-      }
+      updateAllTickers();
+      updateChart();
     });
   });
 
-  updateUSDLBChart();
-  updateAllTickers();
+  // 🚀 INIT
+  async function init() {
+    globalData = await fetchAllData();
+
+    if (!globalData.length) return;
+
+    updateAllTickers();
+    updateChart();
+  }
+
+  init();
 
 });
