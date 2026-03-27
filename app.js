@@ -1,187 +1,149 @@
-// ==============================
-// CONFIG SUPABASE
-// ==============================
-const SUPABASE_URL = "https://pqtbmnqsftqyvkhoszyy.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA";
-const TABLE = "pistachio1";
+document.addEventListener('DOMContentLoaded', () => {
 
-// ==============================
-// GLOBAL STATE (igual que antes)
-// ==============================
-let globalData = [];
-let currentRange = "all";
-let currentColumn = "usdlb_std";
-let chart;
+  const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
 
-// ==============================
-// INIT
-// ==============================
-document.addEventListener("DOMContentLoaded", () => {
-  initTickers();
-  initRanges();
-  fetchData();
-});
+  let primaryPair = 'usdlb_std';
+  let currentRange = 'all';
 
-// ==============================
-// FETCH SUPABASE DATA
-// ==============================
-async function fetchData() {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-      },
-    });
+  const productTitle  = document.getElementById('productTitle');
+  const productPrice  = document.getElementById('productPrice');
+  const productChange = document.getElementById('productChange');
+  const tickers = document.querySelectorAll('.ticker');
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("Supabase error:", data);
-      return;
-    }
-
-    // Orden por fecha (IMPORTANTE para el gráfico)
-    globalData = data.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-    console.log("Datos cargados:", globalData.length);
-
-    initChart();
-    updateHeader();
-    updateChart();
-
-  } catch (err) {
-    console.error("Fetch error:", err);
-  }
-}
-
-// ==============================
-// TICKERS
-// ==============================
-function initTickers() {
-  document.querySelectorAll(".ticker").forEach(ticker => {
-    ticker.addEventListener("click", () => {
-      document.querySelectorAll(".ticker").forEach(t => t.classList.remove("active"));
-      ticker.classList.add("active");
-
-      currentColumn = ticker.dataset.column;
-
-      updateHeader();
-      updateChart();
-    });
-
-    // Set label text
-    ticker.querySelector(".label").textContent = ticker.dataset.name;
+  tickers.forEach(t => {
+    t.querySelector('.label').textContent = t.dataset.name;
   });
-}
 
-// ==============================
-// RANGE BUTTONS
-// ==============================
-function initRanges() {
-  document.querySelectorAll(".ranges button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".ranges button").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+  productTitle.textContent =
+    document.querySelector('.ticker.active').dataset.name;
 
-      currentRange = btn.dataset.range;
+  const ctx = document.getElementById('currencyChart').getContext('2d');
 
-      updateChart();
-    });
-  });
-}
+  const gradient = ctx.createLinearGradient(0, 0, 0, 360);
+  gradient.addColorStop(0, 'rgba(18,21,28,0.12)');
+  gradient.addColorStop(1, 'rgba(18,21,28,0)');
 
-// ==============================
-// HEADER UPDATE
-// ==============================
-function updateHeader() {
-  if (!globalData.length) return;
-
-  const latest = globalData[globalData.length - 1];
-  const prev = globalData[globalData.length - 2];
-
-  const value = latest[currentColumn];
-  const prevValue = prev ? prev[currentColumn] : value;
-
-  const change = value - prevValue;
-  const pct = prevValue ? (change / prevValue) * 100 : 0;
-
-  document.getElementById("productTitle").textContent = currentColumn;
-  document.getElementById("productPrice").textContent = formatNumber(value);
-  document.getElementById("productChange").textContent =
-    `${change >= 0 ? "▲" : "▼"} ${formatNumber(change)} (${pct.toFixed(2)}%)`;
-}
-
-// ==============================
-// CHART INIT
-// ==============================
-function initChart() {
-  const ctx = document.getElementById("currencyChart");
-
-  chart = new Chart(ctx, {
-    type: "line",
+  const chart = new Chart(ctx, {
+    type: 'line',
     data: {
       labels: [],
       datasets: [{
-        label: currentColumn,
         data: [],
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.2
+        borderColor: '#12151c',
+        backgroundColor: gradient,
+        borderWidth: 0.4,
+        fill: true,
+        tension: 0.28,
+        pointRadius: 0
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#12151c',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          displayColors: false
+        },
+        annotation: { annotations: {} }
       },
       scales: {
-        x: { ticks: { maxTicksLimit: 10 } },
-        y: { beginAtZero: false }
+        x: { grid: { display: false } },
+        y: { position: 'right', grace: '15%' }
       }
     }
   });
-}
 
-// ==============================
-// UPDATE CHART
-// ==============================
-function updateChart() {
-  if (!chart || !globalData.length) return;
+  // ============================
+  // FETCH FROM NEW TABLE
+  // ============================
+  async function fetchSeries() {
 
-  let filtered = applyRange(globalData);
+    let url = `${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.asc`;
 
-  const labels = filtered.map(d => d.fecha);
-  const values = filtered.map(d => d[currentColumn]);
+    const response = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    });
 
-  chart.data.labels = labels;
-  chart.data.datasets[0].data = values;
-  chart.data.datasets[0].label = currentColumn;
+    const data = await response.json();
 
-  chart.update();
-}
+    return data;
+  }
 
-// ==============================
-// RANGE FILTER
-// ==============================
-function applyRange(data) {
-  if (currentRange === "all") return data;
+  async function fetchLastTwo() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.desc&limit=2`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    });
 
-  const days = parseInt(currentRange);
-  const cutoff = new Date();
+    return await res.json();
+  }
 
-  cutoff.setDate(cutoff.getDate() - days);
+  async function updateHeader() {
+    const d = await fetchLastTwo();
+    if (!d.length) return;
 
-  return data.filter(d => new Date(d.fecha) >= cutoff);
-}
+    const lastRow = d[0];
+    const prevRow = d[1];
 
-// ==============================
-// FORMAT
-// ==============================
-function formatNumber(num) {
-  if (num === null || num === undefined) return "-";
-  return Number(num).toLocaleString("en-US", {
-    maximumFractionDigits: 2
+    const last = +lastRow[primaryPair];
+    const prev = prevRow ? +prevRow[primaryPair] : null;
+
+    productPrice.textContent = last.toFixed(2);
+
+    if (prev !== null) {
+      const ch = ((last - prev) / prev) * 100;
+
+      productChange.textContent =
+        `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+
+      productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
+      productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
+    }
+  }
+
+  function buildSeries(data) {
+    const labels = data.map(x => x.fecha);
+    const values = data.map(x => +x[primaryPair]);
+
+    return { labels, values };
+  }
+
+  async function updateChart() {
+    const d = await fetchSeries();
+    if (!d.length) return;
+
+    const { labels, values } = buildSeries(d);
+
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = values;
+
+    chart.update();
+    updateHeader();
+  }
+
+  tickers.forEach(t => {
+    t.addEventListener('click', () => {
+      tickers.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+
+      primaryPair = t.dataset.column;
+      productTitle.textContent = t.dataset.name;
+
+      updateChart();
+    });
   });
-}
+
+  updateChart();
+
+});
