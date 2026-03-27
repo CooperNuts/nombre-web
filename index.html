@@ -8,11 +8,6 @@
   <meta name="description" content="Indicative pistachio price signals and market trends for California and Spain markets.">
 
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1" defer></script>
-
   <link rel="icon" href="/favicon-256x256.png" type="image/x-icon">
 </head>
 
@@ -27,8 +22,8 @@
 
     <div class="top-bar">
 
-      <!-- IMPORTANTE: data-column conecta directamente con Supabase -->
-      
+      <!-- TICKERS (con data-column correcto) -->
+
       <div class="ticker active"
            data-column="usdlb_std"
            data-name="Std. Size USX1 USDLB FAS Calif.">
@@ -120,7 +115,7 @@
   <p>© 2025 · E. Lagarda.</p>
 
   <p class="disclaimer">
-    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only. Under no circumstances shall they be construed as firm, binding, or contractual offers. The indicated prices are derived from information gathered from various publicly available and industry-relevant sources. While reasonable efforts are made to ensure accuracy, no representation or warranty is given as to the completeness, reliability, or timeliness of such information. These prices do not take into account specific conditions related to product availability, logistics, contractual volumes, quality specifications, or individual payment terms, all of which may have a material impact on actual commercial offers.
+    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only. Under no circumstances shall they be construed as firm, binding, or contractual offers.
   </p>
 
   <p class="disclaimer">
@@ -128,8 +123,13 @@
   </p>
 </footer>
 
-<!-- TU LÓGICA -->
-<script src="app.js" defer></script>
+<!-- ✅ LIBRERÍAS (orden correcto, SIN defer) -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+
+<!-- TU APP -->
+<script src="app.js"></script>
 
 </body>
 </html>
