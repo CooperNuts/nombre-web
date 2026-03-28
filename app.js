@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
+
+  // 🔑 Tu anon key
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
 
   let primaryPair = 'usdlb_std';
@@ -163,8 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
     b.addEventListener('click', () => {
       document.querySelectorAll('.ranges button')
         .forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
 
+      b.classList.add('active');
       currentRange = b.dataset.range;
 
       updateChart();
