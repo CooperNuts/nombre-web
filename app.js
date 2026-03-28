@@ -2,21 +2,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
 
-  // ✅ Tu anon public key correcta
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
+
+  let primaryPair = 'usdlb_std';
 
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
 
-  // Inicializar labels
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
 
   const activeTicker = document.querySelector('.ticker.active');
-  productTitle.textContent = activeTicker ? activeTicker.dataset.name : '';
+  if (activeTicker) {
+    productTitle.textContent = activeTicker.dataset.name;
+  }
 
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
