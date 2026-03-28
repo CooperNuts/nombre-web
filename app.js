@@ -2,29 +2,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
 
-  // 🔑 Tu anon key
+  // ✅ Tu anon public key correcta
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
 
   let primaryPair = 'usdlb_std';
-  let currentRange = 'all';
-
-  const hitos = [
-    { fecha: '2023-10-02', texto: 'Op. C23' },
-    { fecha: '2024-09-30', texto: 'Op. C24' },
-    { fecha: '2025-09-29', texto: 'Op. C25' }
-  ];
 
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
 
+  // Inicializar labels
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
 
-  productTitle.textContent =
-    document.querySelector('.ticker.active').dataset.name;
+  const activeTicker = document.querySelector('.ticker.active');
+  productTitle.textContent = activeTicker ? activeTicker.dataset.name : '';
 
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
@@ -77,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     );
+
     return await res.json();
   }
 
@@ -90,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     );
+
     return await res.json();
   }
 
@@ -115,6 +111,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function buildHitos(labels) {
     const annotations = {};
+
+    const hitos = [
+      { fecha: '2023-10-02' },
+      { fecha: '2024-09-30' },
+      { fecha: '2025-09-29' }
+    ];
 
     hitos.forEach((h, i) => {
       let idx = labels.findIndex(l => l >= h.fecha);
@@ -156,18 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       primaryPair = t.dataset.column;
       productTitle.textContent = t.dataset.name;
-
-      updateChart();
-    });
-  });
-
-  document.querySelectorAll('.ranges button').forEach(b => {
-    b.addEventListener('click', () => {
-      document.querySelectorAll('.ranges button')
-        .forEach(x => x.classList.remove('active'));
-
-      b.classList.add('active');
-      currentRange = b.dataset.range;
 
       updateChart();
     });
