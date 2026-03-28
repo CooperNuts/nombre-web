@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let primaryPair = 'usdlb_std';
   let currentRange = 'all';
 
+  const hitos = [
+    { fecha: '2023-10-02', texto: 'Op. C23' },
+    { fecha: '2024-09-30', texto: 'Op. C24' },
+    { fecha: '2025-09-29', texto: 'Op. C25' }
+  ];
+
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
@@ -59,33 +65,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ============================
-  // FETCH FROM NEW TABLE
-  // ============================
   async function fetchSeries() {
-
-    let url = `${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.asc`;
-
-    const response = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.asc`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
       }
-    });
-
-    const data = await response.json();
-
-    return data;
+    );
+    return await res.json();
   }
 
   async function fetchLastTwo() {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.desc&limit=2`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.desc&limit=2`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
       }
-    });
-
+    );
     return await res.json();
   }
 
@@ -93,11 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = await fetchLastTwo();
     if (!d.length) return;
 
-    const lastRow = d[0];
-    const prevRow = d[1];
-
-    const last = +lastRow[primaryPair];
-    const prev = prevRow ? +prevRow[primaryPair] : null;
+    const last = +d[0][primaryPair];
+    const prev = d[1] ? +d[1][primaryPair] : null;
 
     productPrice.textContent = last.toFixed(2);
 
@@ -112,21 +111,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function buildSeries(data) {
-    const labels = data.map(x => x.fecha);
-    const values = data.map(x => +x[primaryPair]);
+  function buildHitos(labels) {
+    const annotations = {};
 
-    return { labels, values };
+    hitos.forEach((h, i) => {
+      let idx = labels.findIndex(l => l >= h.fecha);
+      if (idx === -1) return;
+
+      annotations[`hito_${i}`] = {
+        type: 'line',
+        xMin: labels[idx],
+        xMax: labels[idx],
+        borderColor: 'rgba(139,0,0,0.45)',
+        borderWidth: 0.6,
+        borderDash: [2, 4]
+      };
+    });
+
+    return annotations;
   }
 
   async function updateChart() {
     const d = await fetchSeries();
     if (!d.length) return;
 
-    const { labels, values } = buildSeries(d);
+    const labels = d.map(x => x.fecha);
+    const values = d.map(x => +x[primaryPair]);
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
+    chart.options.plugins.annotation.annotations =
+      buildHitos(labels);
 
     chart.update();
     updateHeader();
@@ -139,6 +154,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       primaryPair = t.dataset.column;
       productTitle.textContent = t.dataset.name;
+
+      updateChart();
+    });
+  });
+
+  document.querySelectorAll('.ranges button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.ranges button')
+        .forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+
+      currentRange = b.dataset.range;
 
       updateChart();
     });
