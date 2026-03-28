@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
 
-  let primaryPair = 'usdlb_std';
+  let primaryPair = 'rate_date';
 
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
