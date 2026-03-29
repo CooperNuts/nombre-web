@@ -2,23 +2,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
 
+  // ✅ TU ANON KEY (correctamente puesta en una sola línea)
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
 
-  let primaryPair = 'rate_date';
+  let primaryColumn = 'usdlb_std';
 
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
 
+  // ✅ Mantiene nombres bonitos de los tickers
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
 
-  const activeTicker = document.querySelector('.ticker.active');
-  if (activeTicker) {
-    productTitle.textContent = activeTicker.dataset.name;
-  }
+  productTitle.textContent =
+    document.querySelector('.ticker.active').dataset.name;
 
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data: [],
         borderColor: '#12151c',
         backgroundColor: gradient,
-        borderWidth: 0.4,
+        borderWidth: 0.8,
         fill: true,
         tension: 0.28,
         pointRadius: 0
@@ -51,8 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
           titleColor: '#fff',
           bodyColor: '#fff',
           displayColors: false
-        },
-        annotation: { annotations: {} }
+        }
       },
       scales: {
         x: { grid: { display: false } },
@@ -61,9 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  async function fetchSeries() {
+  // ==============================
+  // FETCH DATA (tabla nueva)
+  // ==============================
+  async function fetchData() {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.asc`,
+      `${SUPABASE_URL}/rest/v1/pistachio1?select=*`,
       {
         headers: {
           apikey: SUPABASE_KEY,
@@ -72,97 +74,105 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     );
 
-    return await res.json();
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error('❌ Error Supabase:', data);
+      return [];
+    }
+
+    return data;
   }
 
-  async function fetchLastTwo() {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/pistachio1?select=*&order=fecha.desc&limit=2`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
+  // ==============================
+  // UPDATE CHART
+  // ==============================
+  async function updateChart() {
+    const data = await fetchData();
+    if (!data.length) return;
+
+    const sorted = data.sort(
+      (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
 
-    return await res.json();
+    const labels = sorted.map(x => x.fecha);
+    const values = sorted.map(x => parseFloat(x[primaryColumn]));
+
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = values;
+
+    chart.update();
+
+    updateHeader(sorted);
+    updateAllTickers(sorted);
   }
 
-  async function updateHeader() {
-    const d = await fetchLastTwo();
-    if (!d.length) return;
+  // ==============================
+  // HEADER
+  // ==============================
+  function updateHeader(data) {
+    if (data.length < 1) return;
 
-    const last = +d[0][primaryPair];
-    const prev = d[1] ? +d[1][primaryPair] : null;
+    const last = data[data.length - 1][primaryColumn];
+    const prev = data[data.length - 2]?.[primaryColumn];
 
-    productPrice.textContent = last.toFixed(2);
+    productPrice.textContent = parseFloat(last).toFixed(2);
 
-    if (prev !== null) {
+    if (prev !== undefined) {
       const ch = ((last - prev) / prev) * 100;
 
+      const arrow = ch >= 0 ? '▲' : '▼';
+
       productChange.textContent =
-        `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`;
+        `${arrow} ${Math.abs(ch).toFixed(2)}%`;
 
       productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
       productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
     }
   }
 
-  function buildHitos(labels) {
-    const annotations = {};
+  // ==============================
+  // TICKERS (top bar)
+  // ==============================
+  function updateAllTickers(data) {
 
-    const hitos = [
-      { fecha: '2023-10-02' },
-      { fecha: '2024-09-30' },
-      { fecha: '2025-09-29' }
-    ];
+    tickers.forEach(t => {
 
-    hitos.forEach((h, i) => {
-      let idx = labels.findIndex(l => l >= h.fecha);
-      if (idx === -1) return;
+      const col = t.dataset.column;
 
-      annotations[`hito_${i}`] = {
-        type: 'line',
-        xMin: labels[idx],
-        xMax: labels[idx],
-        borderColor: 'rgba(139,0,0,0.45)',
-        borderWidth: 0.6,
-        borderDash: [2, 4]
-      };
+      const last = data[data.length - 1][col];
+      const prev = data[data.length - 2]?.[col];
+
+      if (last == null || prev == null) return;
+
+      const ch = ((last - prev) / prev) * 100;
+      const arrow = ch >= 0 ? '▲' : '▼';
+
+      t.querySelector('.delta').textContent =
+        `${arrow} ${Math.abs(ch).toFixed(2)}%`;
     });
-
-    return annotations;
   }
 
-  async function updateChart() {
-    const d = await fetchSeries();
-    if (!d.length) return;
-
-    const labels = d.map(x => x.fecha);
-    const values = d.map(x => +x[primaryPair]);
-
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = values;
-    chart.options.plugins.annotation.annotations =
-      buildHitos(labels);
-
-    chart.update();
-    updateHeader();
-  }
-
+  // ==============================
+  // EVENTS
+  // ==============================
   tickers.forEach(t => {
     t.addEventListener('click', () => {
+
       tickers.forEach(x => x.classList.remove('active'));
       t.classList.add('active');
 
-      primaryPair = t.dataset.column;
+      primaryColumn = t.dataset.column;
+
       productTitle.textContent = t.dataset.name;
 
       updateChart();
     });
   });
 
+  // ==============================
+  // INIT
+  // ==============================
   updateChart();
 
 });
