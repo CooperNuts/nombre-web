@@ -1,8 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+  // ==============================
+  // CONFIG
+  // ==============================
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nJNjTlpkRxQtA';
 
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
+  // ==============================
+  // HITOS
+  // ==============================
+  const hitos = [
+    { fecha: '2023-10-02', texto: 'Op. C23' },
+    { fecha: '2024-09-30', texto: 'Op. C24' },
+    { fecha: '2025-09-29', texto: 'Op. C25' }
+  ];
 
   let primaryColumn = 'usdlb_std';
 
@@ -11,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
 
+  // ==============================
+  // LABELS TICKERS
+  // ==============================
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
@@ -21,6 +35,16 @@ document.addEventListener('DOMContentLoaded', () => {
     productTitle.textContent = activeTicker.dataset.name;
   }
 
+  // ==============================
+  // REGISTER ANNOTATIONS PLUGIN
+  // ==============================
+  if (window['chartjs-plugin-annotation']) {
+    Chart.register(window['chartjs-plugin-annotation']);
+  }
+
+  // ==============================
+  // CHART INIT
+  // ==============================
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
   const gradient = ctx.createLinearGradient(0, 0, 0, 360);
@@ -38,7 +62,18 @@ document.addEventListener('DOMContentLoaded', () => {
         borderWidth: 0.8,
         fill: true,
         tension: 0.28,
-        pointRadius: 0
+        pointRadius: (context) => {
+          const label = context.chart.data.labels[context.dataIndex];
+          return hitos.some(h => h.fecha === label) ? 5 : 0;
+        },
+        pointBackgroundColor: (context) => {
+          const label = context.chart.data.labels[context.dataIndex];
+          return hitos.some(h => h.fecha === label)
+            ? '#5a0000'
+            : 'transparent';
+        },
+        pointBorderColor: '#5a0000',
+        pointBorderWidth: 1
       }]
     },
     options: {
@@ -52,6 +87,25 @@ document.addEventListener('DOMContentLoaded', () => {
           titleColor: '#fff',
           bodyColor: '#fff',
           displayColors: false
+        },
+        annotation: {
+          annotations: hitos.reduce((acc, h, i) => {
+            acc['hito_' + i] = {
+              type: 'line',
+              xMin: h.fecha,
+              xMax: h.fecha,
+              borderColor: 'rgba(90, 0, 0, 0.6)',
+              borderWidth: 1,
+              label: {
+                display: true,
+                content: h.texto,
+                position: 'start',
+                color: '#5a0000',
+                backgroundColor: 'rgba(255,255,255,0.8)'
+              }
+            };
+            return acc;
+          }, {})
         }
       },
       scales: {
@@ -61,11 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 🔥 FIX CRÍTICO: asegurar render correcto del chart
-  setTimeout(() => {
-    chart.resize();
-  }, 0);
-
+  // ==============================
+  // FETCH DATA
+  // ==============================
   async function fetchData() {
     try {
       const res = await fetch(
@@ -93,6 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ==============================
+  // UPDATE CHART
+  // ==============================
   async function updateChart() {
     const data = await fetchData();
     if (!data.length) return;
@@ -101,24 +156,22 @@ document.addEventListener('DOMContentLoaded', () => {
       (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
 
-    const labels = sorted.map(x => x.fecha);
-
-    // 🔥 Validación numérica
-    const values = sorted.map(x => {
-      const v = Number(x[primaryColumn]);
-      return isNaN(v) ? null : v;
-    });
+    // Normalizar fechas (clave para hitos)
+    const labels = sorted.map(x => x.fecha.split('T')[0]);
+    const values = sorted.map(x => Number(x[primaryColumn]));
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
 
     chart.update();
-    chart.resize(); // 🔥 asegura render correcto
 
     updateHeader(sorted);
     updateAllTickers(sorted);
   }
 
+  // ==============================
+  // HEADER
+  // ==============================
   function updateHeader(data) {
     if (data.length < 1) return;
 
@@ -141,6 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ==============================
+  // TICKERS UPDATE
+  // ==============================
   function updateAllTickers(data) {
 
     tickers.forEach(t => {
@@ -160,6 +216,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ==============================
+  // TICKER SWITCH
+  // ==============================
   tickers.forEach(t => {
     t.addEventListener('click', () => {
 
@@ -167,13 +226,15 @@ document.addEventListener('DOMContentLoaded', () => {
       t.classList.add('active');
 
       primaryColumn = t.dataset.column;
-
       productTitle.textContent = t.dataset.name;
 
       updateChart();
     });
   });
 
+  // ==============================
+  // INIT
+  // ==============================
   updateChart();
 
 });
