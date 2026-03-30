@@ -15,28 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     { fecha: '2025-09-29', texto: 'Op. C25' }
   ];
 
-  let primaryColumn = 'usdlb_std';
-
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
-  const tickers = document.querySelectorAll('.ticker');
 
   // ==============================
-  // LABELS
-  // ==============================
-  tickers.forEach(t => {
-    t.querySelector('.label').textContent = t.dataset.name;
-  });
-
-  const activeTicker = document.querySelector('.ticker.active');
-  if (activeTicker) {
-    primaryColumn = activeTicker.dataset.column;
-    productTitle.textContent = activeTicker.dataset.name;
-  }
-
-  // ==============================
-  // REGISTER ANNOTATIONS
+  // ANNOTATIONS
   // ==============================
   if (window['chartjs-plugin-annotation']) {
     Chart.register(window['chartjs-plugin-annotation']);
@@ -47,53 +31,56 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
-  const gradient = ctx.createLinearGradient(0, 0, 0, 360);
-  gradient.addColorStop(0, 'rgba(18,21,28,0.12)');
-  gradient.addColorStop(1, 'rgba(18,21,28,0)');
+  const gradient1 = ctx.createLinearGradient(0, 0, 0, 360);
+  gradient1.addColorStop(0, 'rgba(18,21,28,0.15)');
+  gradient1.addColorStop(1, 'rgba(18,21,28,0)');
+
+  const gradient2 = ctx.createLinearGradient(0, 0, 0, 360);
+  gradient2.addColorStop(0, 'rgba(90,0,0,0.12)');
+  gradient2.addColorStop(1, 'rgba(90,0,0,0)');
 
   const chart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: [],
-      datasets: [{
-        data: [],
-        borderColor: '#12151c',
-        backgroundColor: gradient,
-        borderWidth: 0.8,
-        fill: true,
-        tension: 0.28,
-
-        // PUNTOS EN HITOS
-        pointRadius: (context) => {
-          const label = context.chart.data.labels[context.dataIndex];
-          return hitos.some(h => h.fecha === label) ? 5 : 0;
+      datasets: [
+        {
+          label: 'USDLB STD',
+          data: [],
+          borderColor: '#12151c',
+          backgroundColor: gradient1,
+          borderWidth: 1,
+          fill: true,
+          tension: 0.28,
+          pointRadius: 0
         },
-        pointBackgroundColor: (context) => {
-          const label = context.chart.data.labels[context.dataIndex];
-          return hitos.some(h => h.fecha === label)
-            ? '#5a0000'
-            : 'transparent';
-        },
-        pointBorderColor: '#5a0000',
-        pointBorderWidth: 1
-      }]
+        {
+          label: 'USDLB LARGE',
+          data: [],
+          borderColor: '#5a0000',
+          backgroundColor: gradient2,
+          borderWidth: 1,
+          fill: true,
+          tension: 0.28,
+          pointRadius: 0
+        }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'nearest', intersect: false },
 
       plugins: {
-        legend: { display: false },
+        legend: { display: true },
 
         tooltip: {
           backgroundColor: '#12151c',
           titleColor: '#fff',
           bodyColor: '#fff',
-          displayColors: false,
+          displayColors: true,
           callbacks: {
             label: function(context) {
-              return Number(context.raw).toFixed(2);
+              return `${context.dataset.label}: ${Number(context.raw).toFixed(2)}`;
             }
           }
         },
@@ -104,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
               type: 'line',
               xMin: h.fecha,
               xMax: h.fecha,
-              borderColor: 'rgba(90, 0, 0, 0.6)',
+              borderColor: 'rgba(90, 0, 0, 0.5)',
               borderWidth: 1,
               label: {
                 display: true,
@@ -167,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==============================
-  // UPDATE
+  // UPDATE CHART
   // ==============================
   async function updateChart() {
     const data = await fetchData();
@@ -178,25 +165,28 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
     const labels = sorted.map(x => x.fecha.split('T')[0]);
-    const values = sorted.map(x => Number(x[primaryColumn]));
+
+    const stdValues = sorted.map(x => Number(x.usdlb_std));
+    const largeValues = sorted.map(x => Number(x.usdlb_large));
 
     chart.data.labels = labels;
-    chart.data.datasets[0].data = values;
+
+    chart.data.datasets[0].data = stdValues;
+    chart.data.datasets[1].data = largeValues;
 
     chart.update();
 
     updateHeader(sorted);
-    updateAllTickers(sorted);
   }
 
   // ==============================
-  // HEADER
+  // HEADER (usa STD como referencia)
   // ==============================
   function updateHeader(data) {
     if (data.length < 1) return;
 
-    const last = Number(data[data.length - 1][primaryColumn]);
-    const prev = Number(data[data.length - 2]?.[primaryColumn]);
+    const last = Number(data[data.length - 1].usdlb_std);
+    const prev = Number(data[data.length - 2]?.usdlb_std);
 
     if (isNaN(last)) return;
 
@@ -213,41 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
       productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
     }
   }
-
-  // ==============================
-  // TICKERS
-  // ==============================
-  function updateAllTickers(data) {
-
-    tickers.forEach(t => {
-
-      const col = t.dataset.column;
-
-      const last = Number(data[data.length - 1]?.[col]);
-      const prev = Number(data[data.length - 2]?.[col]);
-
-      if (isNaN(last) || isNaN(prev)) return;
-
-      const ch = ((last - prev) / prev) * 100;
-      const arrow = ch >= 0 ? '▲' : '▼';
-
-      t.querySelector('.delta').textContent =
-        `${arrow} ${Math.abs(ch).toFixed(2)}%`;
-    });
-  }
-
-  tickers.forEach(t => {
-    t.addEventListener('click', () => {
-
-      tickers.forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
-
-      primaryColumn = t.dataset.column;
-      productTitle.textContent = t.dataset.name;
-
-      updateChart();
-    });
-  });
 
   // ==============================
   // INIT
