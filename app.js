@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
 
-  // ✅ TU ANON KEY (correctamente puesta en una sola línea)
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
 
   let primaryColumn = 'usdlb_std';
@@ -12,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
 
-  // ✅ Mantiene nombres bonitos de los tickers
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
@@ -60,9 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ==============================
-  // FETCH DATA (tabla nueva)
-  // ==============================
   async function fetchData() {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/pistachio1?select=*`,
@@ -84,9 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return data;
   }
 
-  // ==============================
-  // UPDATE CHART
-  // ==============================
   async function updateChart() {
     const data = await fetchData();
     if (!data.length) return;
@@ -107,9 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAllTickers(sorted);
   }
 
-  // ==============================
-  // HEADER
-  // ==============================
   function updateHeader(data) {
     if (data.length < 1) return;
 
@@ -120,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (prev !== undefined) {
       const ch = ((last - prev) / prev) * 100;
-
       const arrow = ch >= 0 ? '▲' : '▼';
 
       productChange.textContent =
@@ -131,9 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ==============================
-  // TICKERS (top bar)
-  // ==============================
   function updateAllTickers(data) {
 
     tickers.forEach(t => {
@@ -153,9 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ==============================
-  // EVENTS
-  // ==============================
   tickers.forEach(t => {
     t.addEventListener('click', () => {
 
@@ -170,9 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ==============================
-  // INIT
-  // ==============================
   updateChart();
 
 });
