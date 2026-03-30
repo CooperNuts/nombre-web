@@ -6,9 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nJNjTlpkRxQtA';
 
-  // ==============================
-  // HITOS
-  // ==============================
   const hitos = [
     { fecha: '2023-10-02', texto: 'Op. C23' },
     { fecha: '2024-09-30', texto: 'Op. C24' },
@@ -50,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
           borderColor: '#12151c',
           backgroundColor: gradient1,
           borderWidth: 1,
-          fill: true,
           tension: 0.28,
           pointRadius: 0
         },
@@ -60,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
           borderColor: '#5a0000',
           backgroundColor: gradient2,
           borderWidth: 1,
-          fill: true,
           tension: 0.28,
           pointRadius: 0
         }
@@ -70,6 +65,15 @@ document.addEventListener('DOMContentLoaded', () => {
       responsive: true,
       maintainAspectRatio: false,
 
+      layout: {
+        padding: {
+          left: 10,
+          right: 20,
+          top: 10,
+          bottom: 10
+        }
+      },
+
       plugins: {
         legend: { display: true },
 
@@ -77,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
           backgroundColor: '#12151c',
           titleColor: '#fff',
           bodyColor: '#fff',
-          displayColors: true,
           callbacks: {
             label: function(context) {
               return `${context.dataset.label}: ${Number(context.raw).toFixed(2)}`;
@@ -96,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
               label: {
                 display: true,
                 content: h.texto,
-                position: 'start',
                 color: '#5a0000',
                 backgroundColor: 'rgba(255,255,255,0.8)'
               }
@@ -108,15 +110,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       scales: {
         x: {
-          grid: { display: false }
+          type: 'category',
+          grid: { display: false },
+          ticks: {
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 8
+          }
         },
         y: {
           position: 'right',
           grace: '15%',
           ticks: {
-            callback: function(value) {
-              return Number(value).toFixed(2);
-            }
+            callback: value => Number(value).toFixed(2)
           }
         }
       }
@@ -141,20 +147,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
 
       if (!res.ok) {
-        console.error('❌ Error Supabase:', data);
+        console.error(data);
         return [];
       }
 
       return data;
 
     } catch (err) {
-      console.error('❌ Fetch error:', err);
+      console.error(err);
       return [];
     }
   }
 
   // ==============================
-  // UPDATE CHART
+  // UPDATE
   // ==============================
   async function updateChart() {
     const data = await fetchData();
@@ -166,25 +172,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const labels = sorted.map(x => x.fecha.split('T')[0]);
 
-    const stdValues = sorted.map(x => Number(x.usdlb_std));
-    const largeValues = sorted.map(x => Number(x.usdlb_large));
-
     chart.data.labels = labels;
-
-    chart.data.datasets[0].data = stdValues;
-    chart.data.datasets[1].data = largeValues;
+    chart.data.datasets[0].data = sorted.map(x => Number(x.usdlb_std));
+    chart.data.datasets[1].data = sorted.map(x => Number(x.usdlb_large));
 
     chart.update();
 
     updateHeader(sorted);
   }
 
-  // ==============================
-  // HEADER (usa STD como referencia)
-  // ==============================
   function updateHeader(data) {
-    if (data.length < 1) return;
-
     const last = Number(data[data.length - 1].usdlb_std);
     const prev = Number(data[data.length - 2]?.usdlb_std);
 
@@ -198,9 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       productChange.textContent =
         `${arrow} ${Math.abs(ch).toFixed(2)}%`;
-
-      productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
-      productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
     }
   }
 
