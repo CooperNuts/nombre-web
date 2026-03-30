@@ -61,6 +61,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // 🔥 FIX CRÍTICO: asegurar render correcto del chart
+  setTimeout(() => {
+    chart.resize();
+  }, 0);
+
   async function fetchData() {
     try {
       const res = await fetch(
@@ -97,12 +102,18 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
     const labels = sorted.map(x => x.fecha);
-    const values = sorted.map(x => Number(x[primaryColumn]));
+
+    // 🔥 Validación numérica
+    const values = sorted.map(x => {
+      const v = Number(x[primaryColumn]);
+      return isNaN(v) ? null : v;
+    });
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
 
     chart.update();
+    chart.resize(); // 🔥 asegura render correcto
 
     updateHeader(sorted);
     updateAllTickers(sorted);
