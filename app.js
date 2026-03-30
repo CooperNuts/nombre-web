@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
-
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
+  const SUPABASE_KEY = 'TU_ANON_KEY_AQUI';
 
   let primaryColumn = 'usdlb_std';
 
@@ -11,12 +10,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
 
+  // Set ticker labels
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
 
-  productTitle.textContent =
-    document.querySelector('.ticker.active').dataset.name;
+  // Initialize active ticker safely
+  const activeTicker = document.querySelector('.ticker.active');
+  if (activeTicker) {
+    primaryColumn = activeTicker.dataset.column;
+    productTitle.textContent = activeTicker.dataset.name;
+  }
 
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
@@ -59,24 +63,30 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function fetchData() {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/pistachio1?select=*`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/pistachio1?select=*`,
+        {
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`
+          }
         }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('❌ Supabase error:', data);
+        return [];
       }
-    );
 
-    const data = await res.json();
+      return data;
 
-    if (!res.ok) {
-      console.error('❌ Error Supabase:', data);
+    } catch (err) {
+      console.error('❌ Fetch error:', err);
       return [];
     }
-
-    return data;
   }
 
   async function updateChart() {
@@ -88,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
     const labels = sorted.map(x => x.fecha);
-    const values = sorted.map(x => parseFloat(x[primaryColumn]));
+    const values = sorted.map(x => Number(x[primaryColumn]));
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
@@ -102,12 +112,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateHeader(data) {
     if (data.length < 1) return;
 
-    const last = data[data.length - 1][primaryColumn];
-    const prev = data[data.length - 2]?.[primaryColumn];
+    const last = Number(data[data.length - 1][primaryColumn]);
+    const prev = Number(data[data.length - 2]?.[primaryColumn]);
 
-    productPrice.textContent = parseFloat(last).toFixed(2);
+    if (isNaN(last)) return;
 
-    if (prev !== undefined) {
+    productPrice.textContent = last.toFixed(2);
+
+    if (!isNaN(prev)) {
       const ch = ((last - prev) / prev) * 100;
       const arrow = ch >= 0 ? '▲' : '▼';
 
@@ -125,10 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const col = t.dataset.column;
 
-      const last = data[data.length - 1][col];
-      const prev = data[data.length - 2]?.[col];
+      const last = Number(data[data.length - 1]?.[col]);
+      const prev = Number(data[data.length - 2]?.[col]);
 
-      if (last == null || prev == null) return;
+      if (isNaN(last) || isNaN(prev)) return;
 
       const ch = ((last - prev) / prev) * 100;
       const arrow = ch >= 0 ? '▲' : '▼';
