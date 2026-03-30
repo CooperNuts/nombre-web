@@ -1,207 +1,163 @@
-// ==============================
-// CONFIG
-// ==============================
-const SUPABASE_URL = "https://pqtbmnqsftqyvkhoszyy.supabase.co";
-const SUPABASE_KEY = "PEGA_AQUI_TU_ANON_KEY";
-const TABLE = "pistachio1";
-
-// ==============================
-// STATE
-// ==============================
-let globalData = [];
-let currentColumn = "usdlb_std";
-let chart = null;
-
-// ==============================
-// INIT
-// ==============================
-document.addEventListener("DOMContentLoaded", async () => {
-  console.log("🚀 App iniciada");
-
-  if (!checkDependencies()) return;
-
-  showLoadingState();
-
-  await fetchData();
-
-  setupTickers();
-  setupChart();
-  updateUI();
-});
-
-// ==============================
-// DEPENDENCIES CHECK
-// ==============================
-function checkDependencies() {
-  if (typeof Chart === "undefined") {
-    console.error("❌ Chart.js no está cargado");
-    showError("Chart.js no disponible");
-    return false;
-  }
-  return true;
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f7f7f8;
+  color: #12151c;
 }
 
-// ==============================
-// FETCH DATA (with retry)
-// ==============================
-async function fetchData(retry = 1) {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-      },
-    });
+/* HEADER */
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("❌ Supabase error:", data);
-
-      if (retry > 0) {
-        console.log("🔁 Reintentando...");
-        return fetchData(retry - 1);
-      }
-
-      showError("Error cargando datos de Supabase");
-      return;
-    }
-
-    if (!Array.isArray(data) || data.length === 0) {
-      showError("No hay datos en la tabla");
-      return;
-    }
-
-    globalData = data.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-    console.log("✅ Datos cargados:", globalData.length);
-
-  } catch (err) {
-    console.error("❌ Fetch error:", err);
-    showError("Error de conexión");
-  }
+.header {
+  padding: 24px 32px 0 32px;
 }
 
-// ==============================
-// UI STATES
-// ==============================
-function showLoadingState() {
-  document.getElementById("productTitle").textContent = "Loading...";
-  document.getElementById("productPrice").textContent = "-";
-  document.getElementById("productChange").textContent = "";
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-function showError(message) {
-  document.getElementById("productTitle").textContent = "Error";
-  document.getElementById("productPrice").textContent = "-";
-  document.getElementById("productChange").textContent = message;
+.header h1 {
+  margin: 0;
+  font-size: 2rem;
 }
 
-// ==============================
-// TICKERS
-// ==============================
-function setupTickers() {
-  const tickers = document.querySelectorAll(".ticker");
-
-  tickers.forEach(t => {
-    t.addEventListener("click", () => {
-      document.querySelectorAll(".ticker").forEach(el => el.classList.remove("active"));
-      t.classList.add("active");
-
-      currentColumn = t.dataset.column;
-      updateUI();
-    });
-  });
+.subtitle {
+  margin-top: 4px;
+  font-size: 1.2rem;
+  color: #555;
 }
 
-// ==============================
-// UI UPDATE
-// ==============================
-function updateUI() {
-  if (!globalData.length) return;
+/* TICKERS */
 
-  const latest = globalData[globalData.length - 1];
-  const prev = globalData[globalData.length - 2];
-
-  const value = latest[currentColumn];
-  const prevValue = prev ? prev[currentColumn] : value;
-
-  if (value === undefined) {
-    showError("Columna no encontrada: " + currentColumn);
-    return;
-  }
-
-  const change = value - prevValue;
-  const changePct = prevValue ? (change / prevValue) * 100 : 0;
-
-  document.getElementById("productTitle").textContent = currentColumn.toUpperCase();
-  document.getElementById("productPrice").textContent = formatNumber(value);
-
-  document.getElementById("productChange").textContent =
-    `${change >= 0 ? "▲" : "▼"} ${formatNumber(change)} (${changePct.toFixed(2)}%)`;
-
-  updateChart();
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
-// ==============================
-// CHART
-// ==============================
-function setupChart() {
-  const ctx = document.getElementById("currencyChart");
-
-  if (!ctx) {
-    console.error("Canvas no encontrado");
-    return;
-  }
-
-  chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [{
-        label: currentColumn,
-        data: [],
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        x: { ticks: { maxTicksLimit: 10 } },
-        y: { beginAtZero: false }
-      }
-    }
-  });
+.ticker {
+  padding: 8px 14px;
+  background: #fff;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
 }
 
-// ==============================
-// UPDATE CHART
-// ==============================
-function updateChart() {
-  if (!chart || !globalData.length) return;
-
-  const labels = globalData.map(d => d.fecha);
-  const values = globalData.map(d => d[currentColumn]);
-
-  chart.data.labels = labels;
-  chart.data.datasets[0].data = values;
-  chart.data.datasets[0].label = currentColumn;
-
-  chart.update();
+.ticker:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
-// ==============================
-// FORMAT
-// ==============================
-function formatNumber(num) {
-  if (num === null || num === undefined) return "-";
-  return Number(num).toLocaleString("en-US", {
-    maximumFractionDigits: 2
-  });
+.ticker.active {
+  background: #12151c;
+  color: #fff;
+}
+
+.ticker.active .delta {
+  color: inherit;
+}
+
+.ticker .label {
+  font-weight: 500;
+}
+
+.ticker .delta {
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.delta.up { color: #1a7f37; }
+.delta.down { color: #b42318; }
+.delta.neutral { color: #6b7280; }
+
+/* MAIN */
+
+main {
+  padding: 32px;
+}
+
+.content {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.price {
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.change {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.price.up, .change.up { color: #1a7f37; }
+.price.down, .change.down { color: #b42318; }
+
+/* RANGE BUTTONS */
+
+.ranges {
+  margin: 20px 0;
+}
+
+.ranges button {
+  margin-right: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #eee;
+}
+
+.ranges button.active {
+  background: #12151c;
+  color: #fff;
+}
+
+/* CHART */
+
+.chart-wrapper {
+  height: 480px;
+}
+
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* FOOTER */
+
+footer {
+  margin-top: 120px;
+  padding: 48px 32px 32px;
+  background: #f7f7f8;
+  border-top: 1px solid rgba(18, 21, 28, 0.08);
+  text-align: center;
+}
+
+footer p {
+  margin: 8px auto;
+  max-width: 1100px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: #8a8f98;
 }
