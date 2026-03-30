@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tickers = document.querySelectorAll('.ticker');
 
   // ==============================
-  // LABELS TICKERS
+  // LABELS
   // ==============================
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
@@ -36,14 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==============================
-  // REGISTER ANNOTATIONS PLUGIN
+  // REGISTER ANNOTATIONS
   // ==============================
   if (window['chartjs-plugin-annotation']) {
     Chart.register(window['chartjs-plugin-annotation']);
   }
 
   // ==============================
-  // CHART INIT
+  // CHART
   // ==============================
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
@@ -62,6 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
         borderWidth: 0.8,
         fill: true,
         tension: 0.28,
+
+        // PUNTOS EN HITOS
         pointRadius: (context) => {
           const label = context.chart.data.labels[context.dataIndex];
           return hitos.some(h => h.fecha === label) ? 5 : 0;
@@ -80,14 +82,22 @@ document.addEventListener('DOMContentLoaded', () => {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'nearest', intersect: false },
+
       plugins: {
         legend: { display: false },
+
         tooltip: {
           backgroundColor: '#12151c',
           titleColor: '#fff',
           bodyColor: '#fff',
-          displayColors: false
+          displayColors: false,
+          callbacks: {
+            label: function(context) {
+              return Number(context.raw).toFixed(2);
+            }
+          }
         },
+
         annotation: {
           annotations: hitos.reduce((acc, h, i) => {
             acc['hito_' + i] = {
@@ -108,15 +118,26 @@ document.addEventListener('DOMContentLoaded', () => {
           }, {})
         }
       },
+
       scales: {
-        x: { grid: { display: false } },
-        y: { position: 'right', grace: '15%' }
+        x: {
+          grid: { display: false }
+        },
+        y: {
+          position: 'right',
+          grace: '15%',
+          ticks: {
+            callback: function(value) {
+              return Number(value).toFixed(2);
+            }
+          }
+        }
       }
     }
   });
 
   // ==============================
-  // FETCH DATA
+  // FETCH
   // ==============================
   async function fetchData() {
     try {
@@ -146,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==============================
-  // UPDATE CHART
+  // UPDATE
   // ==============================
   async function updateChart() {
     const data = await fetchData();
@@ -156,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
       (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
 
-    // Normalizar fechas (clave para hitos)
     const labels = sorted.map(x => x.fecha.split('T')[0]);
     const values = sorted.map(x => Number(x[primaryColumn]));
 
@@ -195,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==============================
-  // TICKERS UPDATE
+  // TICKERS
   // ==============================
   function updateAllTickers(data) {
 
@@ -216,9 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ==============================
-  // TICKER SWITCH
-  // ==============================
   tickers.forEach(t => {
     t.addEventListener('click', () => {
 
