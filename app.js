@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ==============================
-  // CONFIG
-  // ==============================
   const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nJNjTlpkRxQtA';
+
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
+
+  let primaryColumn = 'usdlb_std';
 
   const hitos = [
     { fecha: '2023-10-02', texto: 'Op. C23' },
@@ -15,38 +15,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
+  const tickers = document.querySelectorAll('.ticker');
 
-  // ==============================
-  // ANNOTATIONS
-  // ==============================
+  // labels de tickers
+  tickers.forEach(t => {
+    t.querySelector('.label').textContent = t.dataset.name;
+  });
+
+  const activeTicker = document.querySelector('.ticker.active');
+  if (activeTicker) {
+    primaryColumn = activeTicker.dataset.column;
+    productTitle.textContent = activeTicker.dataset.name;
+  }
+
+  // annotation plugin
   if (window['chartjs-plugin-annotation']) {
     Chart.register(window['chartjs-plugin-annotation']);
   }
 
-  // ==============================
-  // CHART
-  // ==============================
   const ctx = document.getElementById('currencyChart').getContext('2d');
 
-  const gradient1 = ctx.createLinearGradient(0, 0, 0, 360);
-  gradient1.addColorStop(0, 'rgba(18,21,28,0.15)');
-  gradient1.addColorStop(1, 'rgba(18,21,28,0)');
-
-  const gradient2 = ctx.createLinearGradient(0, 0, 0, 360);
-  gradient2.addColorStop(0, 'rgba(90,0,0,0.12)');
-  gradient2.addColorStop(1, 'rgba(90,0,0,0)');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 360);
+  gradient.addColorStop(0, 'rgba(18,21,28,0.12)');
+  gradient.addColorStop(1, 'rgba(18,21,28,0)');
 
   const chart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: [],
       datasets: [
         {
           label: 'USDLB STD',
           data: [],
           borderColor: '#12151c',
-          backgroundColor: gradient1,
-          borderWidth: 1,
+          backgroundColor: gradient,
+          borderWidth: 0.8,
+          fill: true,
           tension: 0.28,
           pointRadius: 0
         },
@@ -54,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
           label: 'USDLB LARGE',
           data: [],
           borderColor: '#5a0000',
-          backgroundColor: gradient2,
-          borderWidth: 1,
+          borderWidth: 0.8,
+          fill: false,
           tension: 0.28,
           pointRadius: 0
         }
@@ -64,15 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-
-      layout: {
-        padding: {
-          left: 10,
-          right: 20,
-          top: 10,
-          bottom: 10
-        }
-      },
+      interaction: { mode: 'nearest', intersect: false },
 
       plugins: {
         legend: { display: true },
@@ -81,10 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
           backgroundColor: '#12151c',
           titleColor: '#fff',
           bodyColor: '#fff',
+          displayColors: true,
           callbacks: {
-            label: function(context) {
-              return `${context.dataset.label}: ${Number(context.raw).toFixed(2)}`;
-            }
+            label: ctx =>
+              `${ctx.dataset.label}: ${Number(ctx.raw.y).toFixed(2)}`
           }
         },
 
@@ -92,15 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
           annotations: hitos.reduce((acc, h, i) => {
             acc['hito_' + i] = {
               type: 'line',
-              xMin: h.fecha,
-              xMax: h.fecha,
-              borderColor: 'rgba(90, 0, 0, 0.5)',
+              xMin: new Date(h.fecha),
+              xMax: new Date(h.fecha),
+              borderColor: 'rgba(90,0,0,0.6)',
               borderWidth: 1,
               label: {
                 display: true,
-                content: h.texto,
-                color: '#5a0000',
-                backgroundColor: 'rgba(255,255,255,0.8)'
+                content: h.texto
               }
             };
             return acc;
@@ -108,15 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
 
+      // 🔥 FIX REAL DEL PROBLEMA
       scales: {
         x: {
-          type: 'category',
-          grid: { display: false },
-          ticks: {
-            maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 8
-          }
+          type: 'time',
+          time: {
+            unit: 'month'
+          },
+          grid: { display: false }
         },
         y: {
           position: 'right',
@@ -129,9 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ==============================
-  // FETCH
-  // ==============================
   async function fetchData() {
     try {
       const res = await fetch(
@@ -147,21 +136,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
 
       if (!res.ok) {
-        console.error(data);
+        console.error('❌ Error Supabase:', data);
         return [];
       }
 
       return data;
 
     } catch (err) {
-      console.error(err);
+      console.error('❌ Fetch error:', err);
       return [];
     }
   }
 
-  // ==============================
-  // UPDATE
-  // ==============================
   async function updateChart() {
     const data = await fetchData();
     if (!data.length) return;
@@ -170,20 +156,28 @@ document.addEventListener('DOMContentLoaded', () => {
       (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
 
-    const labels = sorted.map(x => x.fecha.split('T')[0]);
+    // 🔥 CAMBIO CLAVE: usar objetos {x,y}
+    chart.data.datasets[0].data = sorted.map(x => ({
+      x: new Date(x.fecha),
+      y: Number(x.usdlb_std)
+    }));
 
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = sorted.map(x => Number(x.usdlb_std));
-    chart.data.datasets[1].data = sorted.map(x => Number(x.usdlb_large));
+    chart.data.datasets[1].data = sorted.map(x => ({
+      x: new Date(x.fecha),
+      y: Number(x.usdlb_large)
+    }));
 
     chart.update();
 
     updateHeader(sorted);
+    updateAllTickers(sorted);
   }
 
   function updateHeader(data) {
-    const last = Number(data[data.length - 1].usdlb_std);
-    const prev = Number(data[data.length - 2]?.usdlb_std);
+    if (data.length < 1) return;
+
+    const last = Number(data[data.length - 1][primaryColumn]);
+    const prev = Number(data[data.length - 2]?.[primaryColumn]);
 
     if (isNaN(last)) return;
 
@@ -195,12 +189,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
       productChange.textContent =
         `${arrow} ${Math.abs(ch).toFixed(2)}%`;
+
+      productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
+      productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
     }
   }
 
-  // ==============================
-  // INIT
-  // ==============================
+  function updateAllTickers(data) {
+
+    tickers.forEach(t => {
+
+      const col = t.dataset.column;
+
+      const last = Number(data[data.length - 1]?.[col]);
+      const prev = Number(data[data.length - 2]?.[col]);
+
+      if (isNaN(last) || isNaN(prev)) return;
+
+      const ch = ((last - prev) / prev) * 100;
+      const arrow = ch >= 0 ? '▲' : '▼';
+
+      t.querySelector('.delta').textContent =
+        `${arrow} ${Math.abs(ch).toFixed(2)}%`;
+    });
+  }
+
+  tickers.forEach(t => {
+    t.addEventListener('click', () => {
+
+      tickers.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+
+      primaryColumn = t.dataset.column;
+
+      productTitle.textContent = t.dataset.name;
+
+      updateChart();
+    });
+  });
+
   updateChart();
 
 });
