@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
 
-  // ✅ HITOS
   const hitos = [
     { fecha: '2023-10-02', texto: 'Op. C23' },
     { fecha: '2024-09-30', texto: 'Op. C24' },
@@ -55,13 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#12151c',
-          titleColor: '#fff',
-          bodyColor: '#fff',
-          displayColors: false
+          callbacks: {
+            label: ctx => Number(ctx.raw).toFixed(2)
+          }
         },
         annotation: {
-          annotations: {} // se rellenan dinámicamente
+          annotations: {}
         }
       },
       scales: {
@@ -71,7 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         y: {
           position: 'right',
-          grace: '15%'
+          grace: '15%',
+          ticks: {
+            callback: value => Number(value).toFixed(2)
+          }
         }
       }
     }
@@ -112,14 +113,23 @@ document.addEventListener('DOMContentLoaded', () => {
       (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
 
-    const labels = sorted.map(x => x.fecha);
-    const values = sorted.map(x => Number(x[primaryColumn]));
+    // ==============================
+    // ✅ MOSTRAR SOLO ÚLTIMO AÑO
+    // ==============================
+    const lastDate = new Date(sorted[sorted.length - 1].fecha);
+    const cutoff = new Date(lastDate);
+    cutoff.setDate(cutoff.getDate() - 365);
+
+    const filtered = sorted.filter(d => new Date(d.fecha) >= cutoff);
+
+    const labels = filtered.map(x => x.fecha);
+    const values = filtered.map(x => Number(x[primaryColumn]));
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
 
     // ==============================
-    // ✅ HITOS → ANNOTATIONS
+    // ✅ HITOS
     // ==============================
     const annotations = {};
 
@@ -131,32 +141,36 @@ document.addEventListener('DOMContentLoaded', () => {
       const yValue = Number(point[primaryColumn]);
       if (isNaN(yValue)) return;
 
-      // línea vertical
       annotations[`line_${i}`] = {
         type: 'line',
         xMin: hito.fecha,
         xMax: hito.fecha,
-        borderColor: 'rgba(139, 0, 0, 0.25)', // rojo oscuro elegante
-        borderWidth: 1,
-        label: {
-          display: true,
-          content: hito.texto,
-          position: 'start',
-          color: '#8B0000',
-          font: {
-            size: 10
-          }
-        }
+        borderColor: 'rgba(139,0,0,0.25)',
+        borderWidth: 1
       };
 
-      // punto rojo
       annotations[`point_${i}`] = {
         type: 'point',
         xValue: hito.fecha,
         yValue: yValue,
         backgroundColor: '#8B0000',
-        radius: 4,
-        borderWidth: 0
+        radius: 4
+      };
+
+      annotations[`label_${i}`] = {
+        type: 'label',
+        xValue: hito.fecha,
+        yValue: yValue,
+        content: `${hito.texto} · ${yValue.toFixed(2)}`,
+        backgroundColor: '#ffffff',
+        color: '#8B0000',
+        font: {
+          size: 10,
+          weight: '500'
+        },
+        padding: 6,
+        borderRadius: 4,
+        yAdjust: -12
       };
 
     });
