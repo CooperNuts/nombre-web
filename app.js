@@ -2,7 +2,9 @@
 // CONFIG
 // ==============================
 const SUPABASE_URL = "https://pqtbmnqsftqyvkhoszyy.supabase.co";
+
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA";
+
 const TABLE = "pistachio1";
 
 // ==============================
@@ -18,14 +20,13 @@ const hitos = [
 // STATE
 // ==============================
 let globalData = [];
-let activeColumns = ["usdlb_std"]; // ✅ multi-series
+let activeColumns = ["usdlb_std"];
 let chart = null;
 
 // ==============================
 // INIT
 // ==============================
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("🚀 App iniciada");
 
   if (!checkDependencies()) return;
 
@@ -39,21 +40,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ==============================
-// DEPENDENCIES CHECK
+// DEPENDENCIES
 // ==============================
 function checkDependencies() {
   if (typeof Chart === "undefined") {
-    console.error("❌ Chart.js no está cargado");
-    showError("Chart.js no disponible");
+    console.error("Chart.js no cargado");
     return false;
   }
   return true;
 }
 
 // ==============================
-// FETCH DATA
+// FETCH
 // ==============================
-async function fetchData(retry = 1) {
+async function fetchData() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*`, {
       headers: {
@@ -65,37 +65,27 @@ async function fetchData(retry = 1) {
     const data = await res.json();
 
     if (!res.ok) {
-      console.error("❌ Supabase error:", data);
-      if (retry > 0) return fetchData(retry - 1);
-      showError("Error cargando datos");
+      console.error("Supabase error", data);
       return;
     }
 
     globalData = data.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   } catch (err) {
-    console.error("❌ Fetch error:", err);
-    showError("Error conexión");
+    console.error(err);
   }
 }
 
 // ==============================
-// UI STATES
+// UI
 // ==============================
 function showLoadingState() {
   document.getElementById("productTitle").textContent = "Loading...";
   document.getElementById("productPrice").textContent = "-";
-  document.getElementById("productChange").textContent = "";
-}
-
-function showError(message) {
-  document.getElementById("productTitle").textContent = "Error";
-  document.getElementById("productPrice").textContent = "-";
-  document.getElementById("productChange").textContent = message;
 }
 
 // ==============================
-// TICKERS (MULTI SELECT)
+// TICKERS
 // ==============================
 function setupTickers() {
   const tickers = document.querySelectorAll(".ticker");
@@ -124,45 +114,10 @@ function setupTickers() {
 }
 
 // ==============================
-// UI UPDATE
-// ==============================
-function updateUI() {
-  if (!globalData.length) return;
-
-  const latest = globalData[globalData.length - 1];
-  const prev = globalData[globalData.length - 2];
-
-  const col = activeColumns[0];
-  const value = latest[col];
-  const prevValue = prev ? prev[col] : value;
-
-  if (value === undefined) return;
-
-  const change = value - prevValue;
-  const changePct = prevValue ? (change / prevValue) * 100 : 0;
-
-  document.getElementById("productTitle").textContent = activeColumns.join(" + ");
-  document.getElementById("productPrice").textContent = Number(value).toFixed(2);
-
-  // ✅ COLOR INVERTIDO
-  const isPositive = changePct >= 0;
-
-  document.getElementById("productChange").textContent =
-    `${isPositive ? "▲" : "▼"} ${Math.abs(changePct).toFixed(2)}%`;
-
-  document.getElementById("productPrice").className =
-    `price ${isPositive ? "down" : "up"}`;
-  document.getElementById("productChange").className =
-    `change ${isPositive ? "down" : "up"}`;
-
-  updateChart();
-}
-
-// ==============================
 // CHART
 // ==============================
 function setupChart() {
-  const ctx = document.getElementById("currencyChart");
+  const ctx = document.getElementById("currencyChart").getContext("2d");
 
   chart = new Chart(ctx, {
     type: "line",
@@ -175,14 +130,7 @@ function setupChart() {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw).toFixed(2)}`
-          }
-        },
-        annotation: {
-          annotations: {}
-        }
+        annotation: { annotations: {} }
       },
       scales: {
         x: {
@@ -200,18 +148,33 @@ function setupChart() {
 }
 
 // ==============================
-// UPDATE CHART
+// UPDATE CHART (MEJORA AQUÍ)
 // ==============================
 function updateChart() {
   if (!chart || !globalData.length) return;
 
-  const labels = globalData.map(d => d.fecha);
+  const sorted = globalData;
+
+  // ==============================
+  // ✅ MEJORA: eje X mínimo 4 años
+  // ==============================
+  const lastDate = new Date(sorted[sorted.length - 1].fecha);
+
+  const minDate = new Date(lastDate);
+  minDate.setFullYear(minDate.getFullYear() - 4);
+
+  const filtered = sorted.filter(d => new Date(d.fecha) >= minDate);
+
+  const labels = filtered.map(d => d.fecha);
+
   chart.data.labels = labels;
 
-  // ✅ MULTI SERIES
+  // ==============================
+  // DATASETS (MULTI SERIES)
+  // ==============================
   chart.data.datasets = activeColumns.map((col, i) => ({
     label: col,
-    data: globalData.map(d => Number(d[col])),
+    data: filtered.map(d => Number(d[col])),
     borderWidth: 1,
     tension: 0.2,
     pointRadius: 0,
@@ -225,7 +188,7 @@ function updateChart() {
 
   hitos.forEach((h, i) => {
 
-    const point = globalData.find(d => d.fecha === h.fecha);
+    const point = sorted.find(d => d.fecha === h.fecha);
     if (!point) return;
 
     const y = Number(point[activeColumns[0]]);
@@ -265,4 +228,34 @@ function updateChart() {
   chart.options.plugins.annotation.annotations = annotations;
 
   chart.update();
+}
+
+// ==============================
+// UI UPDATE
+// ==============================
+function updateUI() {
+  if (!globalData.length) return;
+
+  updateChart();
+
+  const latest = globalData[globalData.length - 1];
+  const prev = globalData[globalData.length - 2];
+
+  const col = activeColumns[0];
+
+  const value = Number(latest[col]);
+  const prevValue = prev ? Number(prev[col]) : value;
+
+  document.getElementById("productTitle").textContent = activeColumns.join(" + ");
+  document.getElementById("productPrice").textContent = value.toFixed(2);
+
+  const change = ((value - prevValue) / prevValue) * 100;
+
+  const isPositive = change >= 0;
+
+  document.getElementById("productChange").textContent =
+    `${isPositive ? "▲" : "▼"} ${Math.abs(change).toFixed(2)}%`;
+
+  document.getElementById("productChange").className =
+    `change ${isPositive ? "down" : "up"}`;
 }
