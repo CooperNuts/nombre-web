@@ -6,18 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let primaryColumn = 'usdlb_std';
 
-  const hitos = [
-    { fecha: '2023-10-02', texto: 'Op. C23' },
-    { fecha: '2024-09-30', texto: 'Op. C24' },
-    { fecha: '2025-09-29', texto: 'Op. C25' }
-  ];
-
   const productTitle  = document.getElementById('productTitle');
   const productPrice  = document.getElementById('productPrice');
   const productChange = document.getElementById('productChange');
   const tickers = document.querySelectorAll('.ticker');
 
-  // labels de tickers
   tickers.forEach(t => {
     t.querySelector('.label').textContent = t.dataset.name;
   });
@@ -26,11 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (activeTicker) {
     primaryColumn = activeTicker.dataset.column;
     productTitle.textContent = activeTicker.dataset.name;
-  }
-
-  // annotation plugin
-  if (window['chartjs-plugin-annotation']) {
-    Chart.register(window['chartjs-plugin-annotation']);
   }
 
   const ctx = document.getElementById('currencyChart').getContext('2d');
@@ -42,81 +30,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const chart = new Chart(ctx, {
     type: 'line',
     data: {
-      datasets: [
-        {
-          label: 'USDLB STD',
-          data: [],
-          borderColor: '#12151c',
-          backgroundColor: gradient,
-          borderWidth: 0.8,
-          fill: true,
-          tension: 0.28,
-          pointRadius: 0
-        },
-        {
-          label: 'USDLB LARGE',
-          data: [],
-          borderColor: '#5a0000',
-          borderWidth: 0.8,
-          fill: false,
-          tension: 0.28,
-          pointRadius: 0
-        }
-      ]
+      labels: [],
+      datasets: [{
+        data: [],
+        borderColor: '#12151c',
+        backgroundColor: gradient,
+        borderWidth: 0.8,
+        fill: true,
+        tension: 0.28,
+        pointRadius: 0
+      }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'nearest', intersect: false },
-
       plugins: {
-        legend: { display: true },
-
+        legend: { display: false },
         tooltip: {
           backgroundColor: '#12151c',
           titleColor: '#fff',
           bodyColor: '#fff',
-          displayColors: true,
-          callbacks: {
-            label: ctx =>
-              `${ctx.dataset.label}: ${Number(ctx.raw.y).toFixed(2)}`
-          }
-        },
-
-        annotation: {
-          annotations: hitos.reduce((acc, h, i) => {
-            acc['hito_' + i] = {
-              type: 'line',
-              xMin: new Date(h.fecha),
-              xMax: new Date(h.fecha),
-              borderColor: 'rgba(90,0,0,0.6)',
-              borderWidth: 1,
-              label: {
-                display: true,
-                content: h.texto
-              }
-            };
-            return acc;
-          }, {})
+          displayColors: false
         }
       },
-
-      // 🔥 FIX REAL DEL PROBLEMA
       scales: {
-        x: {
-          type: 'time',
-          time: {
-            unit: 'month'
-          },
-          grid: { display: false }
-        },
-        y: {
-          position: 'right',
-          grace: '15%',
-          ticks: {
-            callback: value => Number(value).toFixed(2)
-          }
-        }
+        x: { grid: { display: false } },
+        y: { position: 'right', grace: '15%' }
       }
     }
   });
@@ -156,16 +96,13 @@ document.addEventListener('DOMContentLoaded', () => {
       (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
 
-    // 🔥 CAMBIO CLAVE: usar objetos {x,y}
-    chart.data.datasets[0].data = sorted.map(x => ({
-      x: new Date(x.fecha),
-      y: Number(x.usdlb_std)
-    }));
+    const labels = sorted.map(x => x.fecha);
 
-    chart.data.datasets[1].data = sorted.map(x => ({
-      x: new Date(x.fecha),
-      y: Number(x.usdlb_large)
-    }));
+    // ✅ CORRECCIÓN CLAVE: usar columna dinámica
+    const values = sorted.map(x => Number(x[primaryColumn]));
+
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = values;
 
     chart.update();
 
@@ -220,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tickers.forEach(x => x.classList.remove('active'));
       t.classList.add('active');
 
+      // ✅ cambio de columna
       primaryColumn = t.dataset.column;
 
       productTitle.textContent = t.dataset.name;
