@@ -55,12 +55,15 @@ function checkDependencies() {
 // ==============================
 async function fetchData() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-      },
-    });
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=fecha.asc`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      }
+    );
 
     const data = await res.json();
 
@@ -69,7 +72,10 @@ async function fetchData() {
       return;
     }
 
-    globalData = data.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    // Orden defensivo adicional (no rompe nada)
+    globalData = data
+      .filter(d => d.fecha)
+      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   } catch (err) {
     console.error(err);
@@ -148,7 +154,7 @@ function setupChart() {
 }
 
 // ==============================
-// UPDATE CHART (MEJORA AQUÍ)
+// UPDATE CHART
 // ==============================
 function updateChart() {
   if (!chart || !globalData.length) return;
@@ -156,7 +162,7 @@ function updateChart() {
   const sorted = globalData;
 
   // ==============================
-  // ✅ MEJORA: eje X mínimo 4 años
+  // eje X mínimo 4 años
   // ==============================
   const lastDate = new Date(sorted[sorted.length - 1].fecha);
 
@@ -170,7 +176,7 @@ function updateChart() {
   chart.data.labels = labels;
 
   // ==============================
-  // DATASETS (MULTI SERIES)
+  // DATASETS
   // ==============================
   chart.data.datasets = activeColumns.map((col, i) => ({
     label: col,
