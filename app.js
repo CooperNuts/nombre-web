@@ -55,8 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
       scales: {
-        x: { grid: { display: false } },
-        y: { position: 'right', grace: '15%' }
+        x: {
+          grid: { display: false },
+          bounds: 'ticks' // ✅ asegura que llega al último punto
+        },
+        y: {
+          position: 'right',
+          grace: '15%'
+        }
       }
     }
   });
@@ -96,9 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
       (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
 
+    // ✅ usar TODAS las fechas disponibles
     const labels = sorted.map(x => x.fecha);
 
-    // ✅ CORRECCIÓN CLAVE: usar columna dinámica
     const values = sorted.map(x => Number(x[primaryColumn]));
 
     chart.data.labels = labels;
@@ -157,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
       tickers.forEach(x => x.classList.remove('active'));
       t.classList.add('active');
 
-      // ✅ cambio de columna
       primaryColumn = t.dataset.column;
 
       productTitle.textContent = t.dataset.name;
