@@ -115,3 +115,25 @@ footer {
   font-size: 0.7rem;
   color: #6b7280;
 }
+/* TICKERS EN COLUMNA DERECHA */
+.top-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* COLORES INVERTIDOS */
+.delta.up { color: #1a7f37; }
+.delta.down { color: #8B0000; }
+
+.price.up, .change.up { color: #1a7f37; }
+.price.down, .change.down { color: #8B0000; }
+
+/* MARCO GRÁFICO */
+.chart-wrapper {
+  height: 480px;
+  border: 1px solid rgba(18,21,28,0.1);
+  border-radius: 12px;
+  padding: 10px;
+}
