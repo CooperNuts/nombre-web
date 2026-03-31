@@ -1,61 +1,183 @@
-document.addEventListener('DOMContentLoaded', () => {
+// ==============================
+// CONFIG
+// ==============================
+const SUPABASE_URL = "https://pqtbmnqsftqyvkhoszyy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA";
+const TABLE = "pistachio1";
 
-  const SUPABASE_URL = 'https://pqtbmnqsftqyvkhoszyy.supabase.co';
+// ==============================
+// HITOS
+// ==============================
+const hitos = [
+  { fecha: '2023-10-02', texto: 'Op. C23' },
+  { fecha: '2024-09-30', texto: 'Op. C24' },
+  { fecha: '2025-09-29', texto: 'Op. C25' }
+];
 
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
+// ==============================
+// STATE
+// ==============================
+let globalData = [];
+let activeColumns = ["usdlb_std"]; // ✅ multi-series
+let chart = null;
 
-  const hitos = [
-    { fecha: '2023-10-02', texto: 'Op. C23' },
-    { fecha: '2024-09-30', texto: 'Op. C24' },
-    { fecha: '2025-09-29', texto: 'Op. C25' }
-  ];
+// ==============================
+// INIT
+// ==============================
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🚀 App iniciada");
 
-  let primaryColumn = 'usdlb_std';
+  if (!checkDependencies()) return;
 
-  const productTitle  = document.getElementById('productTitle');
-  const productPrice  = document.getElementById('productPrice');
-  const productChange = document.getElementById('productChange');
-  const tickers = document.querySelectorAll('.ticker');
+  showLoadingState();
+
+  await fetchData();
+
+  setupTickers();
+  setupChart();
+  updateUI();
+});
+
+// ==============================
+// DEPENDENCIES CHECK
+// ==============================
+function checkDependencies() {
+  if (typeof Chart === "undefined") {
+    console.error("❌ Chart.js no está cargado");
+    showError("Chart.js no disponible");
+    return false;
+  }
+  return true;
+}
+
+// ==============================
+// FETCH DATA
+// ==============================
+async function fetchData(retry = 1) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("❌ Supabase error:", data);
+      if (retry > 0) return fetchData(retry - 1);
+      showError("Error cargando datos");
+      return;
+    }
+
+    globalData = data.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+  } catch (err) {
+    console.error("❌ Fetch error:", err);
+    showError("Error conexión");
+  }
+}
+
+// ==============================
+// UI STATES
+// ==============================
+function showLoadingState() {
+  document.getElementById("productTitle").textContent = "Loading...";
+  document.getElementById("productPrice").textContent = "-";
+  document.getElementById("productChange").textContent = "";
+}
+
+function showError(message) {
+  document.getElementById("productTitle").textContent = "Error";
+  document.getElementById("productPrice").textContent = "-";
+  document.getElementById("productChange").textContent = message;
+}
+
+// ==============================
+// TICKERS (MULTI SELECT)
+// ==============================
+function setupTickers() {
+  const tickers = document.querySelectorAll(".ticker");
 
   tickers.forEach(t => {
-    t.querySelector('.label').textContent = t.dataset.name;
+    t.addEventListener("click", () => {
+
+      const col = t.dataset.column;
+
+      if (activeColumns.includes(col)) {
+        activeColumns = activeColumns.filter(c => c !== col);
+        t.classList.remove("active");
+      } else {
+        activeColumns.push(col);
+        t.classList.add("active");
+      }
+
+      if (activeColumns.length === 0) {
+        activeColumns = [col];
+        t.classList.add("active");
+      }
+
+      updateUI();
+    });
   });
+}
 
-  const activeTicker = document.querySelector('.ticker.active');
-  if (activeTicker) {
-    primaryColumn = activeTicker.dataset.column;
-    productTitle.textContent = activeTicker.dataset.name;
-  }
+// ==============================
+// UI UPDATE
+// ==============================
+function updateUI() {
+  if (!globalData.length) return;
 
-  const ctx = document.getElementById('currencyChart').getContext('2d');
+  const latest = globalData[globalData.length - 1];
+  const prev = globalData[globalData.length - 2];
 
-  const gradient = ctx.createLinearGradient(0, 0, 0, 360);
-  gradient.addColorStop(0, 'rgba(18,21,28,0.12)');
-  gradient.addColorStop(1, 'rgba(18,21,28,0)');
+  const col = activeColumns[0];
+  const value = latest[col];
+  const prevValue = prev ? prev[col] : value;
 
-  const chart = new Chart(ctx, {
-    type: 'line',
+  if (value === undefined) return;
+
+  const change = value - prevValue;
+  const changePct = prevValue ? (change / prevValue) * 100 : 0;
+
+  document.getElementById("productTitle").textContent = activeColumns.join(" + ");
+  document.getElementById("productPrice").textContent = Number(value).toFixed(2);
+
+  // ✅ COLOR INVERTIDO
+  const isPositive = changePct >= 0;
+
+  document.getElementById("productChange").textContent =
+    `${isPositive ? "▲" : "▼"} ${Math.abs(changePct).toFixed(2)}%`;
+
+  document.getElementById("productPrice").className =
+    `price ${isPositive ? "down" : "up"}`;
+  document.getElementById("productChange").className =
+    `change ${isPositive ? "down" : "up"}`;
+
+  updateChart();
+}
+
+// ==============================
+// CHART
+// ==============================
+function setupChart() {
+  const ctx = document.getElementById("currencyChart");
+
+  chart = new Chart(ctx, {
+    type: "line",
     data: {
       labels: [],
-      datasets: [{
-        data: [],
-        borderColor: '#12151c',
-        backgroundColor: gradient,
-        borderWidth: 0.8,
-        fill: true,
-        tension: 0.28,
-        pointRadius: 0
-      }]
+      datasets: []
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'nearest', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => Number(ctx.raw).toFixed(2)
+            label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw).toFixed(2)}`
           }
         },
         annotation: {
@@ -64,180 +186,83 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       scales: {
         x: {
-          grid: { display: false },
-          bounds: 'ticks'
+          grid: { display: false }
         },
         y: {
-          position: 'right',
-          grace: '15%',
+          position: "right",
           ticks: {
-            callback: value => Number(value).toFixed(2)
+            callback: v => Number(v).toFixed(2)
           }
         }
       }
     }
   });
+}
 
-  async function fetchData() {
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/pistachio1?select=*`,
-        {
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`
-          }
-        }
-      );
+// ==============================
+// UPDATE CHART
+// ==============================
+function updateChart() {
+  if (!chart || !globalData.length) return;
 
-      const data = await res.json();
+  const labels = globalData.map(d => d.fecha);
+  chart.data.labels = labels;
 
-      if (!res.ok) {
-        console.error('❌ Error Supabase:', data);
-        return [];
-      }
+  // ✅ MULTI SERIES
+  chart.data.datasets = activeColumns.map((col, i) => ({
+    label: col,
+    data: globalData.map(d => Number(d[col])),
+    borderWidth: 1,
+    tension: 0.2,
+    pointRadius: 0,
+    borderColor: i === 0 ? "#12151c" : "#8B0000"
+  }));
 
-      return data;
+  // ==============================
+  // HITOS
+  // ==============================
+  const annotations = {};
 
-    } catch (err) {
-      console.error('❌ Fetch error:', err);
-      return [];
-    }
-  }
+  hitos.forEach((h, i) => {
 
-  async function updateChart() {
-    const data = await fetchData();
-    if (!data.length) return;
+    const point = globalData.find(d => d.fecha === h.fecha);
+    if (!point) return;
 
-    const sorted = data.sort(
-      (a, b) => new Date(a.fecha) - new Date(b.fecha)
-    );
+    const y = Number(point[activeColumns[0]]);
+    if (isNaN(y)) return;
 
-    // ==============================
-    // ✅ MOSTRAR SOLO ÚLTIMO AÑO
-    // ==============================
-    const lastDate = new Date(sorted[sorted.length - 1].fecha);
-    const cutoff = new Date(lastDate);
-    cutoff.setDate(cutoff.getDate() - 365);
+    annotations[`line_${i}`] = {
+      type: "line",
+      xMin: h.fecha,
+      xMax: h.fecha,
+      borderColor: "rgba(139,0,0,0.25)",
+      borderWidth: 1
+    };
 
-    const filtered = sorted.filter(d => new Date(d.fecha) >= cutoff);
+    annotations[`point_${i}`] = {
+      type: "point",
+      xValue: h.fecha,
+      yValue: y,
+      backgroundColor: "#8B0000",
+      radius: 4
+    };
 
-    const labels = filtered.map(x => x.fecha);
-    const values = filtered.map(x => Number(x[primaryColumn]));
+    annotations[`label_${i}`] = {
+      type: "label",
+      xValue: h.fecha,
+      yValue: y,
+      content: `${h.texto} · ${y.toFixed(2)}`,
+      backgroundColor: "#ffffff",
+      color: "#8B0000",
+      font: { size: 10 },
+      padding: 6,
+      borderRadius: 4,
+      yAdjust: -12
+    };
 
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = values;
-
-    // ==============================
-    // ✅ HITOS
-    // ==============================
-    const annotations = {};
-
-    hitos.forEach((hito, i) => {
-
-      const point = sorted.find(d => d.fecha === hito.fecha);
-      if (!point) return;
-
-      const yValue = Number(point[primaryColumn]);
-      if (isNaN(yValue)) return;
-
-      annotations[`line_${i}`] = {
-        type: 'line',
-        xMin: hito.fecha,
-        xMax: hito.fecha,
-        borderColor: 'rgba(139,0,0,0.25)',
-        borderWidth: 1
-      };
-
-      annotations[`point_${i}`] = {
-        type: 'point',
-        xValue: hito.fecha,
-        yValue: yValue,
-        backgroundColor: '#8B0000',
-        radius: 4
-      };
-
-      annotations[`label_${i}`] = {
-        type: 'label',
-        xValue: hito.fecha,
-        yValue: yValue,
-        content: `${hito.texto} · ${yValue.toFixed(2)}`,
-        backgroundColor: '#ffffff',
-        color: '#8B0000',
-        font: {
-          size: 10,
-          weight: '500'
-        },
-        padding: 6,
-        borderRadius: 4,
-        yAdjust: -12
-      };
-
-    });
-
-    chart.options.plugins.annotation.annotations = annotations;
-
-    chart.update();
-
-    updateHeader(sorted);
-    updateAllTickers(sorted);
-  }
-
-  function updateHeader(data) {
-    if (data.length < 1) return;
-
-    const last = Number(data[data.length - 1][primaryColumn]);
-    const prev = Number(data[data.length - 2]?.[primaryColumn]);
-
-    if (isNaN(last)) return;
-
-    productPrice.textContent = last.toFixed(2);
-
-    if (!isNaN(prev)) {
-      const ch = ((last - prev) / prev) * 100;
-      const arrow = ch >= 0 ? '▲' : '▼';
-
-      productChange.textContent =
-        `${arrow} ${Math.abs(ch).toFixed(2)}%`;
-
-      productPrice.className  = `price ${ch >= 0 ? 'up' : 'down'}`;
-      productChange.className = `change ${ch >= 0 ? 'up' : 'down'}`;
-    }
-  }
-
-  function updateAllTickers(data) {
-
-    tickers.forEach(t => {
-
-      const col = t.dataset.column;
-
-      const last = Number(data[data.length - 1]?.[col]);
-      const prev = Number(data[data.length - 2]?.[col]);
-
-      if (isNaN(last) || isNaN(prev)) return;
-
-      const ch = ((last - prev) / prev) * 100;
-      const arrow = ch >= 0 ? '▲' : '▼';
-
-      t.querySelector('.delta').textContent =
-        `${arrow} ${Math.abs(ch).toFixed(2)}%`;
-    });
-  }
-
-  tickers.forEach(t => {
-    t.addEventListener('click', () => {
-
-      tickers.forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
-
-      primaryColumn = t.dataset.column;
-
-      productTitle.textContent = t.dataset.name;
-
-      updateChart();
-    });
   });
 
-  updateChart();
+  chart.options.plugins.annotation.annotations = annotations;
 
-});
+  chart.update();
+}
