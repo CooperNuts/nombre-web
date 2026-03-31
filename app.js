@@ -4,6 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxdGJtbnFzZnRxeXZraG9zenl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NjEyMDgsImV4cCI6MjA4MTIzNzIwOH0.fS2Wp0lp-GEJXVUpfhcaFRQzxtOY7nhJNjTlpkRxQtA';
 
+  // ✅ HITOS
+  const hitos = [
+    { fecha: '2023-10-02', texto: 'Op. C23' },
+    { fecha: '2024-09-30', texto: 'Op. C24' },
+    { fecha: '2025-09-29', texto: 'Op. C25' }
+  ];
+
   let primaryColumn = 'usdlb_std';
 
   const productTitle  = document.getElementById('productTitle');
@@ -52,12 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
           titleColor: '#fff',
           bodyColor: '#fff',
           displayColors: false
+        },
+        annotation: {
+          annotations: {} // se rellenan dinámicamente
         }
       },
       scales: {
         x: {
           grid: { display: false },
-          bounds: 'ticks' // ✅ asegura que llega al último punto
+          bounds: 'ticks'
         },
         y: {
           position: 'right',
@@ -102,13 +112,56 @@ document.addEventListener('DOMContentLoaded', () => {
       (a, b) => new Date(a.fecha) - new Date(b.fecha)
     );
 
-    // ✅ usar TODAS las fechas disponibles
     const labels = sorted.map(x => x.fecha);
-
     const values = sorted.map(x => Number(x[primaryColumn]));
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = values;
+
+    // ==============================
+    // ✅ HITOS → ANNOTATIONS
+    // ==============================
+    const annotations = {};
+
+    hitos.forEach((hito, i) => {
+
+      const point = sorted.find(d => d.fecha === hito.fecha);
+      if (!point) return;
+
+      const yValue = Number(point[primaryColumn]);
+      if (isNaN(yValue)) return;
+
+      // línea vertical
+      annotations[`line_${i}`] = {
+        type: 'line',
+        xMin: hito.fecha,
+        xMax: hito.fecha,
+        borderColor: 'rgba(139, 0, 0, 0.25)', // rojo oscuro elegante
+        borderWidth: 1,
+        label: {
+          display: true,
+          content: hito.texto,
+          position: 'start',
+          color: '#8B0000',
+          font: {
+            size: 10
+          }
+        }
+      };
+
+      // punto rojo
+      annotations[`point_${i}`] = {
+        type: 'point',
+        xValue: hito.fecha,
+        yValue: yValue,
+        backgroundColor: '#8B0000',
+        radius: 4,
+        borderWidth: 0
+      };
+
+    });
+
+    chart.options.plugins.annotation.annotations = annotations;
 
     chart.update();
 
