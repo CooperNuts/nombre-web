@@ -72,7 +72,6 @@ async function fetchData() {
       return;
     }
 
-    // Orden defensivo adicional (no rompe nada)
     globalData = data
       .filter(d => d.fecha)
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
@@ -97,6 +96,13 @@ function setupTickers() {
   const tickers = document.querySelectorAll(".ticker");
 
   tickers.forEach(t => {
+
+    const labelEl = t.querySelector(".label");
+
+    if (labelEl && t.dataset.name) {
+      labelEl.textContent = t.dataset.name;
+    }
+
     t.addEventListener("click", () => {
 
       const col = t.dataset.column;
@@ -161,9 +167,6 @@ function updateChart() {
 
   const sorted = globalData;
 
-  // ==============================
-  // eje X mínimo 4 años
-  // ==============================
   const lastDate = new Date(sorted[sorted.length - 1].fecha);
 
   const minDate = new Date(lastDate);
@@ -175,9 +178,6 @@ function updateChart() {
 
   chart.data.labels = labels;
 
-  // ==============================
-  // DATASETS
-  // ==============================
   chart.data.datasets = activeColumns.map((col, i) => ({
     label: col,
     data: filtered.map(d => Number(d[col])),
@@ -187,9 +187,6 @@ function updateChart() {
     borderColor: i === 0 ? "#12151c" : "#8B0000"
   }));
 
-  // ==============================
-  // HITOS
-  // ==============================
   const annotations = {};
 
   hitos.forEach((h, i) => {
