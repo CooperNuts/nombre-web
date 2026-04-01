@@ -12,11 +12,8 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 
-  <!-- Annotation plugin -->
+  <!-- Plugin de anotaciones (hitos) -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
-
-  <!-- 🔥 Adapter for time scale (required) -->
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
   <link rel="icon" href="/PISTACHIODRAWING.jpg" type="image/x-icon">
 </head>
@@ -29,8 +26,15 @@
       <h1>Pistachio Market Insights</h1>
       <h2 class="subtitle">From data to decisions</h2>
     </div>
+  </div>
+</header>
 
-    <div class="top-bar">
+<main>
+  <section class="content">
+
+    <!-- ✅ TICKERS CENTRADOS SOBRE EL GRÁFICO -->
+    <div class="top-bar centered">
+
       <div class="ticker active" data-pair="USDLB_STD" data-column="usdlb_std" data-name="Std. Size USX1 USDLB FAS Calif.">
         <span class="label"></span>
         <span class="delta"></span>
@@ -55,12 +59,9 @@
         <span class="label"></span>
         <span class="delta"></span>
       </div>
-    </div>
-  </div>
-</header>
 
-<main>
-  <section class="content">
+    </div>
+
     <div class="card">
 
       <h2 id="productTitle"></h2>
@@ -80,6 +81,7 @@
       </div>
 
     </div>
+
   </section>
 </main>
 
