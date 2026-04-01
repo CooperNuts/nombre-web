@@ -9,10 +9,7 @@
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
-
-  <!-- Plugin de anotaciones (hitos) -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
 
   <link rel="icon" href="/PISTACHIODRAWING.jpg" type="image/x-icon">
@@ -32,36 +29,6 @@
 <main>
   <section class="content">
 
-    <!-- ✅ TICKERS CENTRADOS SOBRE EL GRÁFICO -->
-    <div class="top-bar centered">
-
-      <div class="ticker active" data-pair="USDLB_STD" data-column="usdlb_std" data-name="Std. Size USX1 USDLB FAS Calif.">
-        <span class="label"></span>
-        <span class="delta"></span>
-      </div>
-
-      <div class="ticker" data-pair="USDLB_LARGE" data-column="usdlb_large" data-name="Large Size USX1 USDLB FAS Calif.">
-        <span class="label"></span>
-        <span class="delta"></span>
-      </div>
-
-      <div class="ticker" data-pair="USDLB_KERNEL" data-column="usdlb_kernel" data-name="Kernel W80 USX1 USDLB FAS Calif.">
-        <span class="label"></span>
-        <span class="delta"></span>
-      </div>
-
-      <div class="ticker" data-pair="EURKG_ES2125" data-column="eurkg_es2125" data-name="ES 21/25 EURKG EXW Toledo">
-        <span class="label"></span>
-        <span class="delta"></span>
-      </div>
-
-      <div class="ticker" data-pair="EURKG_ESKERNEL" data-column="eurkg_eskernel" data-name="ES Kernel EURKG EXW Toledo">
-        <span class="label"></span>
-        <span class="delta"></span>
-      </div>
-
-    </div>
-
     <div class="card">
 
       <h2 id="productTitle"></h2>
@@ -76,7 +43,39 @@
         <button type="button" data-range="all" class="active">ALL</button>
       </div>
 
+      <!-- ✅ WRAPPER PARA OVERLAY -->
       <div class="chart-wrapper">
+
+        <!-- ✅ CHIPS FLOTANTES -->
+        <div class="floating-tickers">
+
+          <div class="ticker active" data-column="usdlb_std" data-name="Std. Size USX1 USDLB FAS Calif.">
+            <span class="label"></span>
+            <span class="delta"></span>
+          </div>
+
+          <div class="ticker" data-column="usdlb_large" data-name="Large Size USX1 USDLB FAS Calif.">
+            <span class="label"></span>
+            <span class="delta"></span>
+          </div>
+
+          <div class="ticker" data-column="usdlb_kernel" data-name="Kernel W80 USX1 USDLB FAS Calif.">
+            <span class="label"></span>
+            <span class="delta"></span>
+          </div>
+
+          <div class="ticker" data-column="eurkg_es2125" data-name="ES 21/25 EURKG EXW Toledo">
+            <span class="label"></span>
+            <span class="delta"></span>
+          </div>
+
+          <div class="ticker" data-column="eurkg_eskernel" data-name="ES Kernel EURKG EXW Toledo">
+            <span class="label"></span>
+            <span class="delta"></span>
+          </div>
+
+        </div>
+
         <canvas id="currencyChart"></canvas>
       </div>
 
@@ -89,11 +88,7 @@
   <p>© 2025 · E. Lagarda.</p>
 
   <p class="disclaimer">
-    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only. Under no circumstances shall they be construed as firm, binding, or contractual offers. The indicated prices are derived from information gathered from various publicly available and industry-relevant sources. While reasonable efforts are made to ensure accuracy, no representation or warranty is given as to the completeness, reliability, or timeliness of such information. These prices do not take into account specific conditions related to product availability, logistics, contractual volumes, quality specifications, or individual payment terms, all of which may have a material impact on actual commercial offers.
-  </p>
-
-  <p class="disclaimer">
-    I love pistachios, not sure about the vice-versa though.
+    The prices displayed on this website are provided solely as indicative price signals reflecting general market conditions and are intended for statistical and informational purposes only.
   </p>
 </footer>
 
