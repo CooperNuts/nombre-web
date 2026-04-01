@@ -56,12 +56,13 @@ function checkDependencies() {
 async function fetchData() {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=fecha.asc`,
+      `${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=fecha.desc`,
       {
         headers: {
           apikey: SUPABASE_KEY,
           Authorization: `Bearer ${SUPABASE_KEY}`,
-        },
+          Range: "0-10000"
+        }
       }
     );
 
