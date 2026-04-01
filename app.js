@@ -179,7 +179,7 @@ function updateChart() {
   chart.data.labels = labels;
 
   chart.data.datasets = activeColumns.map((col, i) => ({
-    label: col,
+    label: label,
     data: filtered.map(d => Number(d[col])),
     borderWidth: 1,
     tension: 0.2,
