@@ -148,3 +148,94 @@ footer {
   flex-wrap: wrap;
   margin: 20px 0 10px 0;
 }
+
+/* ============================= */
+/* CHART WRAPPER */
+/* ============================= */
+
+.chart-wrapper {
+  position: relative;
+  height: 520px;
+  border: 1px solid rgba(18, 21, 28, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* ============================= */
+/* FLOATING TICKERS (🔥 CLAVE) */
+/* ============================= */
+
+.floating-tickers {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+  flex-wrap: wrap;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* ============================= */
+/* TICKER STYLE PRO */
+/* ============================= */
+
+.ticker {
+  pointer-events: all;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.65);
+
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  transition: all 0.2s ease;
+}
+
+.ticker:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.ticker.active {
+  background: rgba(18, 21, 28, 0.9);
+  color: #fff;
+  border-color: rgba(18, 21, 28, 0.9);
+}
+
+.ticker .label {
+  font-weight: 500;
+}
+
+.ticker .delta {
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+/* ============================= */
+/* DELTAS */
+/* ============================= */
+
+.delta.up {
+  color: #b42318; /* rojo oscuro positivo */
+}
+
+.delta.down {
+  color: #1a7f37; /* verde oscuro negativo */
+}
+
+/* ============================= */
+/* FOOTER COLOR FIX */
+/* ============================= */
+
+footer p {
+  color: #6b7280;
+}
