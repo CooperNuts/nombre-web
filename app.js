@@ -76,8 +76,10 @@ async function fetchData() {
       .filter(d => d.fecha)
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
+    console.log("Datos cargados:", globalData.length);
+
   } catch (err) {
-    console.error(err);
+    console.error("Fetch error:", err);
   }
 }
 
@@ -87,6 +89,7 @@ async function fetchData() {
 function showLoadingState() {
   document.getElementById("productTitle").textContent = "Loading...";
   document.getElementById("productPrice").textContent = "-";
+  document.getElementById("productChange").textContent = "";
 }
 
 // ==============================
@@ -163,7 +166,10 @@ function setupChart() {
 // UPDATE CHART
 // ==============================
 function updateChart() {
-  if (!chart || !globalData.length) return;
+  if (!chart || !globalData.length) {
+    console.warn("No hay datos para pintar el gráfico");
+    return;
+  }
 
   const sorted = globalData;
 
@@ -172,20 +178,34 @@ function updateChart() {
   const minDate = new Date(lastDate);
   minDate.setFullYear(minDate.getFullYear() - 4);
 
-  const filtered = sorted.filter(d => new Date(d.fecha) >= minDate);
+  const filtered = sorted.filter(d => {
+    const date = new Date(d.fecha);
+    return !isNaN(date) && date >= minDate;
+  });
+
+  console.log("Puntos en gráfico:", filtered.length);
 
   const labels = filtered.map(d => d.fecha);
 
   chart.data.labels = labels;
 
-  chart.data.datasets = activeColumns.map((col, i) => ({
-    label: label,
-    data: filtered.map(d => Number(d[col])),
-    borderWidth: 1,
-    tension: 0.2,
-    pointRadius: 0,
-    borderColor: i === 0 ? "#12151c" : "#8B0000"
-  }));
+  chart.data.datasets = activeColumns.map((col, i) => {
+
+    const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
+    const label = ticker ? ticker.dataset.name : col;
+
+    return {
+      label: label,
+      data: filtered.map(d => {
+        const v = Number(d[col]);
+        return isNaN(v) ? null : v;
+      }),
+      borderWidth: 1,
+      tension: 0.2,
+      pointRadius: 0,
+      borderColor: i === 0 ? "#12151c" : "#8B0000"
+    };
+  });
 
   const annotations = {};
 
@@ -237,7 +257,10 @@ function updateChart() {
 // UI UPDATE
 // ==============================
 function updateUI() {
-  if (!globalData.length) return;
+  if (!globalData.length) {
+    console.warn("No hay datos en UI");
+    return;
+  }
 
   updateChart();
 
@@ -248,6 +271,11 @@ function updateUI() {
 
   const value = Number(latest[col]);
   const prevValue = prev ? Number(prev[col]) : value;
+
+  if (isNaN(value)) {
+    console.warn("Valor inválido en columna:", col);
+    return;
+  }
 
   document.getElementById("productTitle").textContent = activeColumns.join(" + ");
   document.getElementById("productPrice").textContent = value.toFixed(2);
