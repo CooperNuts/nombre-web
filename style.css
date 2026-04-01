@@ -137,3 +137,14 @@ footer {
   border-radius: 12px;
   padding: 10px;
 }
+
+/* TICKERS CENTRADOS SOBRE EL GRÁFICO */
+
+.top-bar.centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 20px 0 10px 0;
+}
