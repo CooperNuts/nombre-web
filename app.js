@@ -147,8 +147,7 @@ function setupChart() {
       plugins: {
         legend: { display: false },
         title: {
-          display: true,
-          text: ""
+          display: false,
         },
         annotation: { annotations: {} }
       },
