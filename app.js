@@ -135,6 +135,9 @@ function setupTickers() {
 function setupChart() {
   const ctx = document.getElementById("currencyChart").getContext("2d");
 
+  // ✅ FIX CRÍTICO
+  Chart.register(window['chartjs-plugin-annotation']);
+
   chart = new Chart(ctx, {
     type: "line",
     data: {
@@ -154,7 +157,6 @@ function setupChart() {
         },
         y: {
           position: "right",
-          grace: "10%",
           ticks: {
             callback: v => Number(v).toFixed(2)
           }
@@ -294,4 +296,23 @@ function updateUI() {
 
   document.getElementById("productChange").className =
     `change ${isPositive ? "down" : "up"}`;
+
+  // ==============================
+  // % VARIATION EN TICKERS
+  // ==============================
+  document.querySelectorAll(".ticker").forEach(t => {
+    const colTicker = t.dataset.column;
+
+    const latestVal = Number(latest[colTicker]);
+    const prevVal = prev ? Number(prev[colTicker]) : latestVal;
+
+    if (!isNaN(latestVal) && !isNaN(prevVal)) {
+      const pct = ((latestVal - prevVal) / prevVal) * 100;
+
+      const deltaEl = t.querySelector(".delta");
+      if (deltaEl) {
+        deltaEl.textContent = `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(2)}%`;
+      }
+    }
+  });
 }
