@@ -239,3 +239,14 @@ footer {
 footer p {
   color: #6b7280;
 }
+
+.tickers-container {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.tickers-container::-webkit-scrollbar {
+  height: 6px;
+}
