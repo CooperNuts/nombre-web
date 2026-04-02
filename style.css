@@ -341,3 +341,19 @@ footer p {
   opacity: 1;
   transform: translateY(0);
 }
+.floating-tickers {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.ticker {
+  flex: 0 0 auto;
+}
+
+.ticker .delta {
+  font-size: 11px;
+  opacity: 0.7;
+}
