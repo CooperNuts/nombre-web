@@ -259,6 +259,7 @@ footer p {
   gap: 24px;
   padding: 48px 32px;
   flex-wrap: wrap;
+   width: 100%; /* 🔥 añade esto */
 }
 
 /* CARD */
