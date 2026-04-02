@@ -62,7 +62,7 @@ async function fetchData() {
           apikey: SUPABASE_KEY,
           Authorization: `Bearer ${SUPABASE_KEY}`,
           Range: "0-10000"
-        }
+        },
       }
     );
 
