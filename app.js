@@ -146,6 +146,10 @@ function setupChart() {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
+        title: {
+          display: true,
+          text: ""
+        },
         annotation: { annotations: {} }
       },
       scales: {
@@ -154,6 +158,7 @@ function setupChart() {
         },
         y: {
           position: "right",
+          grace: "10%",
           ticks: {
             callback: v => Number(v).toFixed(2)
           }
@@ -250,6 +255,14 @@ function updateChart() {
   });
 
   chart.options.plugins.annotation.annotations = annotations;
+
+  // ✅ TÍTULO DINÁMICO
+  chart.options.plugins.title.text = activeColumns
+    .map(col => {
+      const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
+      return ticker ? ticker.dataset.name : col;
+    })
+    .join(" + ");
 
   chart.update();
 }
