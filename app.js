@@ -146,9 +146,6 @@ function setupChart() {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        title: {
-          display: false,
-        },
         annotation: { annotations: {} }
       },
       scales: {
@@ -197,9 +194,7 @@ function updateChart() {
   chart.data.datasets = activeColumns.map((col, i) => {
 
     const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
-    const label = ticker?.dataset.name : col;
-     })
-     .join(" + ");
+    const label = ticker ? ticker.dataset.name : col;
 
     return {
       label: label,
@@ -257,14 +252,6 @@ function updateChart() {
 
   chart.options.plugins.annotation.annotations = annotations;
 
-  // ✅ TÍTULO DINÁMICO
-  chart.options.plugins.title.text = activeColumns
-    .map(col => {
-      const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
-      return ticker ? ticker.dataset.name : col;
-    })
-    .join(" + ");
-
   chart.update();
 }
 
@@ -284,6 +271,9 @@ function updateUI() {
 
   const col = activeColumns[0];
 
+  const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
+  const label = ticker ? ticker.dataset.name : col;
+
   const value = Number(latest[col]);
   const prevValue = prev ? Number(prev[col]) : value;
 
@@ -292,7 +282,7 @@ function updateUI() {
     return;
   }
 
-  document.getElementById("productTitle").textContent = activeColumns.join(" + ");
+  document.getElementById("productTitle").textContent = label;
   document.getElementById("productPrice").textContent = value.toFixed(2);
 
   const change = ((value - prevValue) / prevValue) * 100;
