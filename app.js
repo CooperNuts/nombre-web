@@ -254,6 +254,26 @@ function updateChart() {
 
   chart.options.plugins.annotation.annotations = annotations;
 
+  chart.options.plugins.annotation.annotations = annotations;
+
+  const allValues = [];
+
+  activeColumns.forEach(col => {
+    filtered.forEach(d => {
+      const v = Number(d[col]);
+      if (!isNaN(v)) allValues.push(v);
+    });
+  });
+
+  const max = Math.max(...allValues);
+  const min = Math.min(...allValues);
+
+  const range = max - min;
+  const padding = range === 0 ? max * 0.05 : range * 0.05;
+
+  chart.options.scales.y.min = min - padding;
+  chart.options.scales.y.max = max + padding;
+  
   chart.update();
 }
 
