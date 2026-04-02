@@ -250,3 +250,90 @@ footer p {
 .tickers-container::-webkit-scrollbar {
   height: 6px;
 }
+
+/* DASHBOARD RESOURCE CARDS */
+
+.dashboard-cards {
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+  padding: 48px 32px;
+  flex-wrap: wrap;
+}
+
+/* CARD */
+
+.report-card {
+  width: 300px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 32px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* CARD HOVER */
+
+.report-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.12);
+}
+
+/* LABEL */
+
+.report-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8f98;
+}
+
+/* TITLE */
+
+.report-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* DESCRIPTION */
+
+.report-desc {
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* BUTTON */
+
+.report-button {
+  display: inline-block;
+  text-decoration: none;
+
+  background: #12151c;
+  color: #ffffff;
+
+  padding: 10px 18px;
+  border-radius: 8px;
+
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  opacity: 0;
+  transform: translateY(6px);
+
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* BUTTON APPEARS ON HOVER */
+
+.report-card:hover .report-button {
+  opacity: 1;
+  transform: translateY(0);
+}
