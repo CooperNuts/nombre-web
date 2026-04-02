@@ -197,7 +197,9 @@ function updateChart() {
   chart.data.datasets = activeColumns.map((col, i) => {
 
     const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
-    const label = ticker ? ticker.dataset.name : col;
+    const label = ticker?.dataset.name : col;
+     })
+     .join(" + ");
 
     return {
       label: label,
