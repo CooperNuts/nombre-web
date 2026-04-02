@@ -245,7 +245,10 @@ footer p {
   flex-wrap: nowrap;
   gap: 8px;
   overflow-x: auto;
+  white-space: nowrap;
+  align-items: center;
 }
+
 
 .tickers-container::-webkit-scrollbar {
   height: 6px;
