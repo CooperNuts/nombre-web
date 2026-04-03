@@ -269,7 +269,7 @@ function updateChart() {
   const min = Math.min(...allValues);
 
   const range = max - min;
-  const padding = range === 0 ? max * 0.05 : range * 0.05;
+  const padding = range === 0 ? max * 0.20 : range * 0.20;
 
   chart.options.scales.y.min = min - padding;
   chart.options.scales.y.max = max + padding;
