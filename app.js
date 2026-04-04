@@ -56,12 +56,11 @@ function checkDependencies() {
 async function fetchData() {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=fecha.desc`,
+      `${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=fecha.asc`,
       {
         headers: {
           apikey: SUPABASE_KEY,
           Authorization: `Bearer ${SUPABASE_KEY}`,
-          Range: "0-10000"
         },
       }
     );
@@ -76,8 +75,6 @@ async function fetchData() {
     globalData = data
       .filter(d => d.fecha)
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-    console.log("Datos cargados:", globalData.length);
 
   } catch (err) {
     console.error("Fetch error:", err);
@@ -130,13 +127,40 @@ function setupTickers() {
 }
 
 // ==============================
+// MEDIA MOVIL 3M (≈90 días)
+// ==============================
+function calculateSMA(values, period = 90) {
+  const result = [];
+
+  for (let i = 0; i < values.length; i++) {
+
+    if (i < period - 1) {
+      result.push(null);
+      continue;
+    }
+
+    let sum = 0;
+    let count = 0;
+
+    for (let j = 0; j < period; j++) {
+      const v = values[i - j];
+      if (v !== null && !isNaN(v)) {
+        sum += v;
+        count++;
+      }
+    }
+
+    result.push(count ? sum / count : null);
+  }
+
+  return result;
+}
+
+// ==============================
 // CHART
 // ==============================
 function setupChart() {
   const ctx = document.getElementById("currencyChart").getContext("2d");
-
-  // ✅ FIX CRÍTICO
-  Chart.register(window['chartjs-plugin-annotation']);
 
   chart = new Chart(ctx, {
     type: "line",
@@ -147,10 +171,26 @@ function setupChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
+
       plugins: {
         legend: { display: false },
-        annotation: { annotations: {} }
+        annotation: { annotations: {} },
+
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: 'x',
+            threshold: 5
+          },
+          zoom: {
+            wheel: { enabled: true },
+            pinch: { enabled: true },
+            mode: 'x'
+          }
+        }
       },
+
       scales: {
         x: {
           grid: { display: false }
@@ -170,10 +210,7 @@ function setupChart() {
 // UPDATE CHART
 // ==============================
 function updateChart() {
-  if (!chart || !globalData.length) {
-    console.warn("No hay datos para pintar el gráfico");
-    return;
-  }
+  if (!chart || !globalData.length) return;
 
   const sorted = globalData;
 
@@ -187,30 +224,46 @@ function updateChart() {
     return !isNaN(date) && date >= minDate;
   });
 
-  console.log("Puntos en gráfico:", filtered.length);
+  chart.data.labels = filtered.map(d => d.fecha);
 
-  const labels = filtered.map(d => d.fecha);
+  chart.data.datasets = [];
 
-  chart.data.labels = labels;
-
-  chart.data.datasets = activeColumns.map((col, i) => {
+  activeColumns.forEach((col, i) => {
 
     const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
     const label = ticker ? ticker.dataset.name : col;
 
-    return {
+    const values = filtered.map(d => {
+      const v = Number(d[col]);
+      return isNaN(v) ? null : v;
+    });
+
+    // SERIE ORIGINAL
+    chart.data.datasets.push({
       label: label,
-      data: filtered.map(d => {
-        const v = Number(d[col]);
-        return isNaN(v) ? null : v;
-      }),
-      borderWidth: 1,
+      data: values,
+      borderWidth: 1.5,
       tension: 0.2,
       pointRadius: 0,
       borderColor: i === 0 ? "#12151c" : "#8B0000"
-    };
+    });
+
+    // MEDIA MÓVIL 3M
+    const sma = calculateSMA(values, 90);
+
+    chart.data.datasets.push({
+      label: label + " SMA(3M)",
+      data: sma,
+      borderWidth: 1,
+      borderDash: [5, 5],
+      tension: 0.2,
+      pointRadius: 0,
+      borderColor: "rgba(0,0,0,0.35)"
+    });
+
   });
 
+  // HITOS
   const annotations = {};
 
   hitos.forEach((h, i) => {
@@ -254,26 +307,6 @@ function updateChart() {
 
   chart.options.plugins.annotation.annotations = annotations;
 
-  chart.options.plugins.annotation.annotations = annotations;
-
-  const allValues = [];
-
-  activeColumns.forEach(col => {
-    filtered.forEach(d => {
-      const v = Number(d[col]);
-      if (!isNaN(v)) allValues.push(v);
-    });
-  });
-
-  const max = Math.max(...allValues);
-  const min = Math.min(...allValues);
-
-  const range = max - min;
-  const padding = range === 0 ? max * 0.20 : range * 0.20;
-
-  chart.options.scales.y.min = min - padding;
-  chart.options.scales.y.max = max + padding;
-  
   chart.update();
 }
 
@@ -281,10 +314,7 @@ function updateChart() {
 // UI UPDATE
 // ==============================
 function updateUI() {
-  if (!globalData.length) {
-    console.warn("No hay datos en UI");
-    return;
-  }
+  if (!globalData.length) return;
 
   updateChart();
 
@@ -293,22 +323,13 @@ function updateUI() {
 
   const col = activeColumns[0];
 
-  const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
-  const label = ticker ? ticker.dataset.name : col;
-
   const value = Number(latest[col]);
   const prevValue = prev ? Number(prev[col]) : value;
 
-  if (isNaN(value)) {
-    console.warn("Valor inválido en columna:", col);
-    return;
-  }
-
-  document.getElementById("productTitle").textContent = label;
+  document.getElementById("productTitle").textContent = activeColumns.join(" + ");
   document.getElementById("productPrice").textContent = value.toFixed(2);
 
   const change = ((value - prevValue) / prevValue) * 100;
-
   const isPositive = change >= 0;
 
   document.getElementById("productChange").textContent =
@@ -316,23 +337,13 @@ function updateUI() {
 
   document.getElementById("productChange").className =
     `change ${isPositive ? "down" : "up"}`;
-
-  // ==============================
-  // % VARIATION EN TICKERS
-  // ==============================
-  document.querySelectorAll(".ticker").forEach(t => {
-    const colTicker = t.dataset.column;
-
-    const latestVal = Number(latest[colTicker]);
-    const prevVal = prev ? Number(prev[colTicker]) : latestVal;
-
-    if (!isNaN(latestVal) && !isNaN(prevVal)) {
-      const pct = ((latestVal - prevVal) / prevVal) * 100;
-
-      const deltaEl = t.querySelector(".delta");
-      if (deltaEl) {
-        deltaEl.textContent = `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(2)}%`;
-      }
-    }
-  });
 }
+
+// ==============================
+// RESET ZOOM (tecla R)
+// ==============================
+document.addEventListener("keydown", (e) => {
+  if (e.key === "r" && chart) {
+    chart.resetZoom();
+  }
+});
