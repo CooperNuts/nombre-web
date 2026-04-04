@@ -357,3 +357,44 @@ footer p {
   font-size: 11px;
   opacity: 0.7;
 }
+
+/* ============================= */
+/* TIPOGRAFÍA PROFESIONAL */
+/* ============================= */
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f5f5f7;
+  color: #12151c;
+}
+
+/* TITULOS */
+h1 {
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* SUBTITULO */
+.subtitle {
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+/* PRECIO */
+.price {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+/* TICKERS */
+.ticker {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+/* FOOTER */
+footer p {
+  color: #6b7280;
+}
