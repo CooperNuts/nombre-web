@@ -239,7 +239,6 @@ function updateChart() {
       return isNaN(v) ? null : v;
     });
 
-    // SERIE ORIGINAL
     chart.data.datasets.push({
       label: label,
       data: values,
@@ -249,7 +248,6 @@ function updateChart() {
       borderColor: i === 0 ? "#12151c" : "#8B0000"
     });
 
-    // MEDIA MÓVIL 3M
     const sma = calculateSMA(values, 90);
 
     chart.data.datasets.push({
@@ -264,7 +262,6 @@ function updateChart() {
 
   });
 
-  // HITOS
   const annotations = {};
 
   hitos.forEach((h, i) => {
@@ -327,7 +324,10 @@ function updateUI() {
   const value = Number(latest[col]);
   const prevValue = prev ? Number(prev[col]) : value;
 
-  document.getElementById("productTitle").textContent = activeColumns.join(" + ");
+  const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
+  const label = ticker ? ticker.dataset.name : col;
+
+  document.getElementById("productTitle").textContent = label;
   document.getElementById("productPrice").textContent = value.toFixed(2);
 
   const change = ((value - prevValue) / prevValue) * 100;
