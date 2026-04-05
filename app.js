@@ -197,7 +197,7 @@ function setupChart() {
         },
         y: {
           position: "right",
-          grace: "20%"
+          grace: "20%",
           ticks: {
             callback: v => Number(v).toFixed(2)
           }
