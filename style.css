@@ -18,10 +18,13 @@ body {
 
 .header-top {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  flex-wrap: wrap;
+  justify-content: center;   
+  align-items: center;
+  text-align: center;        
+}
+
+.header-top > div {
+  text-align: center;
 }
 
 /* ==============================
