@@ -398,3 +398,23 @@ h1 {
 footer p {
   color: #9c9c9c;
 }
+/* ==============================
+   TIPOGRAFÍA
+============================== */
+
+body {
+  font-family: 'Manrope', sans-serif;
+}
+
+h1 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-weight: 500;
+}
+
+.price {
+  font-weight: 600;
+}
