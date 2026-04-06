@@ -225,6 +225,11 @@ function updateChart() {
     return !isNaN(date) && date >= minDate;
   });
 
+  const lastDataPoint = sorted[sorted.length - 1];
+
+  if (!filtered.find(d => d.fecha === lastDataPoint.fecha)) {
+  filtered.push(lastDataPoint);
+
   chart.data.labels = filtered.map(d => d.fecha);
 
   chart.data.datasets = [];
