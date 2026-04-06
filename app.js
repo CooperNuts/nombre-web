@@ -229,6 +229,7 @@ function updateChart() {
 
   if (!filtered.find(d => d.fecha === lastDataPoint.fecha)) {
   filtered.push(lastDataPoint);
+  }
 
   chart.data.labels = filtered.map(d => d.fecha);
 
