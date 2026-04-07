@@ -127,7 +127,7 @@ function setupTickers() {
 }
 
 // ==============================
-// MEDIA MOVIL 3M (≈90 días)
+// MEDIA MOVIL 3M
 // ==============================
 function calculateSMA(values, period = 90) {
   const result = [];
@@ -175,28 +175,11 @@ function setupChart() {
 
       plugins: {
         legend: { display: false },
-        annotation: { annotations: {} },
-
-        zoom: {
-          pan: {
-            enabled: true,
-            mode: 'x',
-            threshold: 5
-          },
-          zoom: {
-            wheel: { enabled: true },
-            pinch: { enabled: true },
-            mode: 'x'
-          }
-        }
+        annotation: { annotations: {} }
       },
 
       scales: {
         x: {
-          type: 'time', // ✅ FIX CLAVE
-          time: {
-            unit: 'month'
-          },
           grid: { display: false }
         },
         y: {
@@ -217,7 +200,7 @@ function setupChart() {
 function updateChart() {
   if (!chart || !globalData.length) return;
 
-  const sorted = globalData;
+  const sorted = [...globalData].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   const lastDate = new Date(sorted[sorted.length - 1].fecha);
 
@@ -229,16 +212,16 @@ function updateChart() {
     return !isNaN(date) && date >= minDate;
   });
 
-  // ✅ asegurar orden correcto
-  filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  // asegurar orden final
+  filtered = filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-  const lastDataPoint = globalData[globalData.length - 1];
+  const lastDataPoint = sorted[sorted.length - 1];
 
   if (lastDataPoint && !filtered.find(d => d.fecha === lastDataPoint.fecha)) {
     filtered.push(lastDataPoint);
   }
 
-  filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  filtered = filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   chart.data.labels = filtered.map(d => d.fecha);
 
@@ -356,7 +339,7 @@ function updateUI() {
 }
 
 // ==============================
-// RESET ZOOM (tecla R)
+// RESET ZOOM
 // ==============================
 document.addEventListener("keydown", (e) => {
   if (e.key === "r" && chart) {
