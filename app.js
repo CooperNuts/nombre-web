@@ -221,8 +221,8 @@ function updateChart() {
   minDate.setFullYear(minDate.getFullYear() - 4);
 
   const filtered = sorted.filter(d => {
-    const date = new Date(d.fecha);
-    return !isNaN(date) && date >= minDate;
+  const date = new Date(d.fecha);
+  return !isNaN(date) && date >= minDate;
   });
 
   const lastDataPoint = data[data.length - 1];
