@@ -221,14 +221,15 @@ function updateChart() {
   minDate.setFullYear(minDate.getFullYear() - 4);
 
   const filtered = sorted.filter(d => {
-  const date = new Date(d.fecha);
-  return !isNaN(date) && date >= minDate;
+    const date = new Date(d.fecha);
+    return !isNaN(date) && date >= minDate;
   });
 
+  // ✅ FIX (único cambio)
   const lastDataPoint = globalData[globalData.length - 1];
 
   if (lastDataPoint && !filtered.find(d => d.fecha === lastDataPoint.fecha)) {
-  filtered.push(lastDataPoint);
+    filtered.push(lastDataPoint);
   }
 
   chart.data.labels = filtered.map(d => d.fecha);
@@ -333,7 +334,6 @@ function updateUI() {
   const value = Number(latest[col]);
   const prevValue = prev ? Number(prev[col]) : value;
 
-  // ======= CAMBIO REALIZADO: usar label del ticker
   const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
   const label = ticker ? ticker.dataset.name : col;
 
