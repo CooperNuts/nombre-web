@@ -76,10 +76,6 @@ async function fetchData() {
       .filter(d => d.fecha)
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-    console.log("TOTAL ROWS:", globalData.length);
-    console.log("LAST DATE:", globalData[globalData.length - 1]);
-    console.log("FIRST DATE:", globalData[0]);
-
   } catch (err) {
     console.error("Fetch error:", err);
   }
@@ -197,6 +193,10 @@ function setupChart() {
 
       scales: {
         x: {
+          type: 'time', // ✅ FIX CLAVE
+          time: {
+            unit: 'month'
+          },
           grid: { display: false }
         },
         y: {
@@ -224,17 +224,21 @@ function updateChart() {
   const minDate = new Date(lastDate);
   minDate.setFullYear(minDate.getFullYear() - 4);
 
-  const filtered = sorted.filter(d => {
+  let filtered = sorted.filter(d => {
     const date = new Date(d.fecha);
     return !isNaN(date) && date >= minDate;
   });
 
-  // ✅ FIX (único cambio)
+  // ✅ asegurar orden correcto
+  filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
   const lastDataPoint = globalData[globalData.length - 1];
 
   if (lastDataPoint && !filtered.find(d => d.fecha === lastDataPoint.fecha)) {
     filtered.push(lastDataPoint);
   }
+
+  filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   chart.data.labels = filtered.map(d => d.fecha);
 
@@ -250,7 +254,6 @@ function updateChart() {
       return isNaN(v) ? null : v;
     });
 
-    // SERIE ORIGINAL
     chart.data.datasets.push({
       label: label,
       data: values,
@@ -260,7 +263,6 @@ function updateChart() {
       borderColor: i === 0 ? "#12151c" : "#8B0000"
     });
 
-    // MEDIA MÓVIL 3M
     const sma = calculateSMA(values, 90);
 
     chart.data.datasets.push({
@@ -275,7 +277,6 @@ function updateChart() {
 
   });
 
-  // HITOS
   const annotations = {};
 
   hitos.forEach((h, i) => {
