@@ -56,7 +56,7 @@ function checkDependencies() {
 async function fetchData() {
   try {
     const res = await fetch(
-      ``${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=fecha.asc&limit=5000`,
+      `${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=fecha.asc&limit=5000`,
       {
         headers: {
           apikey: SUPABASE_KEY,
