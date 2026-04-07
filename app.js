@@ -28,27 +28,24 @@ let chart = null;
 // ==============================
 document.addEventListener("DOMContentLoaded", async () => {
 
-  if (!checkDependencies()) return;
+  if (typeof Chart === "undefined") {
+    console.error("Chart.js no cargado");
+    return;
+  }
 
   showLoadingState();
 
   await fetchData();
 
+  if (!globalData.length) {
+    console.error("No data loaded");
+    return;
+  }
+
   setupTickers();
   setupChart();
   updateUI();
 });
-
-// ==============================
-// DEPENDENCIES
-// ==============================
-function checkDependencies() {
-  if (typeof Chart === "undefined") {
-    console.error("Chart.js no cargado");
-    return false;
-  }
-  return true;
-}
 
 // ==============================
 // FETCH
@@ -67,8 +64,16 @@ async function fetchData() {
 
     const data = await res.json();
 
+    console.log("STATUS:", res.status);
+    console.log("DATA SAMPLE:", data.slice ? data.slice(0, 5) : data);
+
     if (!res.ok) {
-      console.error("Supabase error", data);
+      console.error("Supabase error:", data);
+      return;
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      console.error("Empty dataset");
       return;
     }
 
@@ -127,7 +132,7 @@ function setupTickers() {
 }
 
 // ==============================
-// MEDIA MOVIL 3M
+// SMA
 // ==============================
 function calculateSMA(values, period = 90) {
   const result = [];
@@ -203,7 +208,6 @@ function updateChart() {
   const sorted = [...globalData].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   const lastDate = new Date(sorted[sorted.length - 1].fecha);
-
   const minDate = new Date(lastDate);
   minDate.setFullYear(minDate.getFullYear() - 4);
 
@@ -212,7 +216,6 @@ function updateChart() {
     return !isNaN(date) && date >= minDate;
   });
 
-  // asegurar orden final
   filtered = filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   const lastDataPoint = sorted[sorted.length - 1];
@@ -224,7 +227,6 @@ function updateChart() {
   filtered = filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   chart.data.labels = filtered.map(d => d.fecha);
-
   chart.data.datasets = [];
 
   activeColumns.forEach((col, i) => {
@@ -302,7 +304,6 @@ function updateChart() {
   });
 
   chart.options.plugins.annotation.annotations = annotations;
-
   chart.update();
 }
 
