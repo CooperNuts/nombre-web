@@ -76,6 +76,10 @@ async function fetchData() {
       .filter(d => d.fecha)
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
+    console.log("TOTAL ROWS:", globalData.length);
+    console.log("LAST DATE:", globalData[globalData.length - 1]);
+    console.log("FIRST DATE:", globalData[0]);
+
   } catch (err) {
     console.error("Fetch error:", err);
   }
