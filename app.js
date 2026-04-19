@@ -193,7 +193,14 @@ function setupChart() {
           ticks: {
             callback: v => Number(v).toFixed(2)
           }
-        }
+        },
+        yLeft: {   // 🔥 NUEVO EJE
+          position: "left",
+          grid: {
+            drawOnChartArea: false // evita ensuciar el gráfico
+          },
+          ticks: {
+            callback: v => Number(v).toFixed(0)
       }
     }
   });
