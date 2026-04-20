@@ -194,13 +194,20 @@ function setupChart() {
             callback: v => Number(v).toFixed(2)
           }
         },
-        yLeft: {   // 🔥 NUEVO EJE
+
+        // ==============================
+        // 🔥 AÑADIDO: EJE IZQUIERDO
+        // ==============================
+        yLeft: {
           position: "left",
           grid: {
-            drawOnChartArea: false // evita ensuciar el gráfico
+            drawOnChartArea: false
           },
           ticks: {
             callback: v => Number(v).toFixed(0)
+          },
+          grace: "40%"
+        }
       }
     }
   });
@@ -234,7 +241,28 @@ function updateChart() {
   filtered = filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   chart.data.labels = filtered.map(d => d.fecha);
+
   chart.data.datasets = [];
+
+  // ==============================
+  // 🔥 AÑADIDO: COLUMNAS STOCK
+  // ==============================
+  const stockValues = filtered.map(d => {
+    const v = Number(d.stock_MT);
+    return isNaN(v) ? null : v;
+  });
+
+  chart.data.datasets.push({
+    type: "bar",
+    label: "Stock MT",
+    data: stockValues,
+    yAxisID: "yLeft",
+    backgroundColor: "rgba(18,21,28,0.06)",
+    borderColor: "rgba(18,21,28,0.5)",
+    borderWidth: 1.2,
+    barPercentage: 0.6,
+    categoryPercentage: 0.9
+  });
 
   activeColumns.forEach((col, i) => {
 
@@ -311,6 +339,7 @@ function updateChart() {
   });
 
   chart.options.plugins.annotation.annotations = annotations;
+
   chart.update();
 }
 
