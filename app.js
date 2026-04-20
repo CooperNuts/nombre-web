@@ -187,19 +187,33 @@ function setupChart() {
         x: {
           grid: { display: false }
         },
+
         y: {
           position: "right",
-          grace: "20%",
+          grace: "25%",
           ticks: {
             callback: v => Number(v).toFixed(2)
           }
         },
+
+        // ==============================
+        // 🔥 EJE IZQUIERDO (STOCK)
+        // ==============================
         yLeft: {
           position: "left",
-          grid: { drawOnChartArea: false },
+          beginAtZero: true,
+          min: 0,
+
+          grid: {
+            drawOnChartArea: false
+          },
+
           ticks: {
             callback: v => Number(v).toFixed(0)
           },
+
+          // 🔥 MÁS SEPARACIÓN VISUAL ARRIBA
+          suggestedMax: undefined,
           grace: "80%"
         }
       }
@@ -224,6 +238,8 @@ function updateChart() {
     return !isNaN(date) && date >= minDate;
   });
 
+  filtered = filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
   const lastDataPoint = sorted[sorted.length - 1];
 
   if (lastDataPoint && !filtered.find(d => d.fecha === lastDataPoint.fecha)) {
@@ -236,7 +252,7 @@ function updateChart() {
   chart.data.datasets = [];
 
   // ==============================
-  // STOCK (COLUMNAS)
+  // 🔥 COLUMNAS STOCK (EJE IZQ)
   // ==============================
   const stockValues = filtered.map(d => {
     const v = Number(d.stock_MT);
@@ -248,16 +264,15 @@ function updateChart() {
     label: "Stock MT",
     data: stockValues,
     yAxisID: "yLeft",
-    backgroundColor: "rgba(18,21,28,0.04)",
-    borderColor: "rgba(18,21,28,0.45)",
-    borderWidth: 1,
+
+    backgroundColor: "rgba(18,21,28,0.03)", // casi transparente
+    borderColor: "rgba(18,21,28,0.6)",      // borde más visible
+    borderWidth: 1.3,
+
     barPercentage: 0.55,
-    categoryPercentage: 0.9
+    categoryPercentage: 0.85
   });
 
-  // ==============================
-  // SERIES
-  // ==============================
   activeColumns.forEach((col, i) => {
 
     const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
@@ -290,52 +305,6 @@ function updateChart() {
     });
 
   });
-
-  // ==============================
-  // HITOS
-  // ==============================
-  const annotations = {};
-
-  hitos.forEach((h, i) => {
-
-    const point = sorted.find(d => d.fecha === h.fecha);
-    if (!point) return;
-
-    const y = Number(point[activeColumns[0]]);
-    if (isNaN(y)) return;
-
-    annotations[`line_${i}`] = {
-      type: "line",
-      xMin: h.fecha,
-      xMax: h.fecha,
-      borderColor: "rgba(139,0,0,0.25)",
-      borderWidth: 1
-    };
-
-    annotations[`point_${i}`] = {
-      type: "point",
-      xValue: h.fecha,
-      yValue: y,
-      backgroundColor: "#8B0000",
-      radius: 4
-    };
-
-    annotations[`label_${i}`] = {
-      type: "label",
-      xValue: h.fecha,
-      yValue: y,
-      content: `${h.texto} · ${y.toFixed(2)}`,
-      backgroundColor: "#ffffff",
-      color: "#8B0000",
-      font: { size: 10 },
-      padding: 6,
-      borderRadius: 4,
-      yAdjust: -12
-    };
-
-  });
-
-  chart.options.plugins.annotation.annotations = annotations;
 
   chart.update();
 }
