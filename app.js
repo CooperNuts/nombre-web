@@ -194,17 +194,13 @@ function setupChart() {
             callback: v => Number(v).toFixed(2)
           }
         },
-
-        // 🔥 EJE IZQUIERDO (NO TOCA NADA MÁS)
         yLeft: {
           position: "left",
-          grid: {
-            drawOnChartArea: false
-          },
+          grid: { drawOnChartArea: false },
           ticks: {
             callback: v => Number(v).toFixed(0)
           },
-          grace: "80%" // 🔥 separación fuerte para no solapar
+          grace: "80%"
         }
       }
     }
@@ -228,8 +224,6 @@ function updateChart() {
     return !isNaN(date) && date >= minDate;
   });
 
-  filtered = filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
   const lastDataPoint = sorted[sorted.length - 1];
 
   if (lastDataPoint && !filtered.find(d => d.fecha === lastDataPoint.fecha)) {
@@ -239,10 +233,11 @@ function updateChart() {
   filtered = filtered.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
   chart.data.labels = filtered.map(d => d.fecha);
-
   chart.data.datasets = [];
 
-  // 🔥 COLUMNAS STOCK (AÑADIDO LIMPIO)
+  // ==============================
+  // STOCK (COLUMNAS)
+  // ==============================
   const stockValues = filtered.map(d => {
     const v = Number(d.stock_MT);
     return isNaN(v) ? null : v;
@@ -253,13 +248,16 @@ function updateChart() {
     label: "Stock MT",
     data: stockValues,
     yAxisID: "yLeft",
-    backgroundColor: "rgba(18,21,28,0.04)",   // 🔥 casi transparente
-    borderColor: "rgba(18,21,28,0.45)",       // 🔥 borde más visible
-    borderWidth: 1.2,
+    backgroundColor: "rgba(18,21,28,0.04)",
+    borderColor: "rgba(18,21,28,0.45)",
+    borderWidth: 1,
     barPercentage: 0.55,
     categoryPercentage: 0.9
   });
 
+  // ==============================
+  // SERIES
+  // ==============================
   activeColumns.forEach((col, i) => {
 
     const ticker = document.querySelector(`.ticker[data-column="${col}"]`);
@@ -293,6 +291,9 @@ function updateChart() {
 
   });
 
+  // ==============================
+  // HITOS
+  // ==============================
   const annotations = {};
 
   hitos.forEach((h, i) => {
