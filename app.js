@@ -195,9 +195,7 @@ function setupChart() {
           }
         },
 
-        // ==============================
-        // 🔥 AÑADIDO: EJE IZQUIERDO
-        // ==============================
+        // 🔥 EJE IZQUIERDO (NO TOCA NADA MÁS)
         yLeft: {
           position: "left",
           grid: {
@@ -206,7 +204,7 @@ function setupChart() {
           ticks: {
             callback: v => Number(v).toFixed(0)
           },
-          grace: "40%"
+          grace: "80%" // 🔥 separación fuerte para no solapar
         }
       }
     }
@@ -244,9 +242,7 @@ function updateChart() {
 
   chart.data.datasets = [];
 
-  // ==============================
-  // 🔥 AÑADIDO: COLUMNAS STOCK
-  // ==============================
+  // 🔥 COLUMNAS STOCK (AÑADIDO LIMPIO)
   const stockValues = filtered.map(d => {
     const v = Number(d.stock_MT);
     return isNaN(v) ? null : v;
@@ -257,10 +253,10 @@ function updateChart() {
     label: "Stock MT",
     data: stockValues,
     yAxisID: "yLeft",
-    backgroundColor: "rgba(18,21,28,0.06)",
-    borderColor: "rgba(18,21,28,0.5)",
+    backgroundColor: "rgba(18,21,28,0.04)",   // 🔥 casi transparente
+    borderColor: "rgba(18,21,28,0.45)",       // 🔥 borde más visible
     borderWidth: 1.2,
-    barPercentage: 0.6,
+    barPercentage: 0.55,
     categoryPercentage: 0.9
   });
 
