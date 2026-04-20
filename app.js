@@ -188,33 +188,35 @@ function setupChart() {
           grid: { display: false }
         },
 
+        // ==============================
+        // DERECHA ($/lb)
+        // ==============================
         y: {
           position: "right",
-          grace: "25%",
+          grace: "20%",
           ticks: {
-            callback: v => Number(v).toFixed(2)
+            callback: v => {
+              if (v === 0) return "0 $/lb";
+              return Number(v).toFixed(2) + " $/lb";
+            }
           }
         },
 
         // ==============================
-        // 🔥 EJE IZQUIERDO (STOCK)
+        // IZQUIERDA (MT)
         // ==============================
         yLeft: {
           position: "left",
-          beginAtZero: true,
-          min: 0,
-
-          grid: {
-            drawOnChartArea: false
-          },
+          grid: { drawOnChartArea: false },
 
           ticks: {
-            callback: v => Number(v).toFixed(0)
+            callback: v => {
+              if (v === 0) return "0 MT";
+              return Number(v).toFixed(0) + " MT";
+            }
           },
 
-          // 🔥 MÁS SEPARACIÓN VISUAL ARRIBA
-          suggestedMax: undefined,
-          grace: "80%"
+          grace: "40%"
         }
       }
     }
@@ -251,9 +253,6 @@ function updateChart() {
   chart.data.labels = filtered.map(d => d.fecha);
   chart.data.datasets = [];
 
-  // ==============================
-  // 🔥 COLUMNAS STOCK (EJE IZQ)
-  // ==============================
   const stockValues = filtered.map(d => {
     const v = Number(d.stock_MT);
     return isNaN(v) ? null : v;
@@ -264,11 +263,9 @@ function updateChart() {
     label: "Stock MT",
     data: stockValues,
     yAxisID: "yLeft",
-
-    backgroundColor: "rgba(18,21,28,0.03)", // casi transparente
-    borderColor: "rgba(18,21,28,0.6)",      // borde más visible
+    backgroundColor: "rgba(18,21,28,0.03)",
+    borderColor: "rgba(18,21,28,0.6)",
     borderWidth: 1.3,
-
     barPercentage: 0.55,
     categoryPercentage: 0.85
   });
