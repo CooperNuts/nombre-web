@@ -316,3 +316,83 @@ footer p {
   color: #6b7280;
   line-height: 1.5;
 }
+/* ==============================
+   DASHBOARD CARDS (MISMA FILA FIX)
+============================== */
+.dashboard-cards {
+  display: flex;
+  gap: 24px;
+  padding: 48px 32px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+/* ==============================
+   CARD BASE (UNIFICADA)
+============================== */
+.report-card {
+  width: 300px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.report-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.12);
+}
+
+/* ==============================
+   EXPORT VARIANT (solo detalle visual)
+============================== */
+.export-card {
+  border: 1px solid rgba(18, 21, 28, 0.08);
+}
+
+/* ==============================
+   TEXTOS
+============================== */
+.report-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8f98;
+}
+
+.report-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.report-desc {
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* ==============================
+   BOTÓN
+============================== */
+.report-button {
+  display: inline-block;
+  text-decoration: none;
+  background: #12151c;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.report-button:hover {
+  opacity: 0.85;
+}
