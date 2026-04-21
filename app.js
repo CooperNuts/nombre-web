@@ -188,35 +188,24 @@ function setupChart() {
           grid: { display: false }
         },
 
-        // ==============================
-        // DERECHA ($/lb)
-        // ==============================
         y: {
           position: "right",
           grace: "20%",
           ticks: {
-            callback: v => {
-              if (v === 0) return "0";
-              return Number(v).toFixed(2) + " ";
-            }
+            callback: v => Number(v).toFixed(2) + " $/lb"
           }
         },
 
-        // ==============================
-        // IZQUIERDA (MT)
-        // ==============================
         yLeft: {
           position: "left",
-          grid: { drawOnChartArea: false },
-
-          ticks: {
-            callback: v => {
-              if (v === 0) return "0 MT";
-              return Number(v).toFixed(0) + " MT";
-            }
+          beginAtZero: true,
+          grace: "80%",
+          grid: {
+            drawOnChartArea: false
           },
-
-          grace: "40%"
+          ticks: {
+            callback: v => Number(v).toFixed(0) + " MT"
+          }
         }
       }
     }
@@ -253,6 +242,7 @@ function updateChart() {
   chart.data.labels = filtered.map(d => d.fecha);
   chart.data.datasets = [];
 
+  // 🔥 STOCK BARS
   const stockValues = filtered.map(d => {
     const v = Number(d.stock_MT);
     return isNaN(v) ? null : v;
@@ -263,11 +253,11 @@ function updateChart() {
     label: "Stock MT",
     data: stockValues,
     yAxisID: "yLeft",
-    backgroundColor: "rgba(18,21,28,0.005)",
-    borderColor: "rgba(18,21,28,0.005)",
-    borderWidth: 1.2,
-    barPercentage: 0.55,
-    categoryPercentage: 0.85
+    backgroundColor: "rgba(18,21,28,0.03)", // MUY TRANSPARENTE
+    borderColor: "rgba(18,21,28,0.6)",
+    borderWidth: 1.3,
+    barPercentage: 0.6,
+    categoryPercentage: 0.9
   });
 
   activeColumns.forEach((col, i) => {
@@ -303,6 +293,48 @@ function updateChart() {
 
   });
 
+  const annotations = {};
+
+  hitos.forEach((h, i) => {
+
+    const point = sorted.find(d => d.fecha === h.fecha);
+    if (!point) return;
+
+    const y = Number(point[activeColumns[0]]);
+    if (isNaN(y)) return;
+
+    annotations[`line_${i}`] = {
+      type: "line",
+      xMin: h.fecha,
+      xMax: h.fecha,
+      borderColor: "rgba(139,0,0,0.25)",
+      borderWidth: 1
+    };
+
+    annotations[`point_${i}`] = {
+      type: "point",
+      xValue: h.fecha,
+      yValue: y,
+      backgroundColor: "#8B0000",
+      radius: 4
+    };
+
+    annotations[`label_${i}`] = {
+      type: "label",
+      xValue: h.fecha,
+      yValue: y,
+      content: `${h.texto} · ${y.toFixed(2)}`,
+      backgroundColor: "#ffffff",
+      color: "#8B0000",
+      font: { size: 10 },
+      padding: 6,
+      borderRadius: 4,
+      yAdjust: -12
+    };
+
+  });
+
+  chart.options.plugins.annotation.annotations = annotations;
   chart.update();
 }
 
