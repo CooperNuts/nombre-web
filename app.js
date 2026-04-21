@@ -188,7 +188,7 @@ function setupChart() {
           position: "right",
           grace: "30%",
           ticks: {
-            callback: v => Number(v).toFixed(2) + " "
+            callback: v => Number(v).toFixed(2)
           }
         },
         yLeft: {
@@ -236,9 +236,7 @@ function updateChart() {
   chart.data.labels = filtered.map(d => d.fecha);
   chart.data.datasets = [];
 
-  // ==============================
   // COLUMNAS STOCK
-  // ==============================
   const stockValues = filtered.map(d => {
     const v = Number(d.stock_MT);
     return isNaN(v) ? null : v;
@@ -336,7 +334,11 @@ function updateChart() {
 
   });
 
-  chart.options.plugins.annotation.annotations = annotations;
+  chart.options.plugins.annotation = {
+    annotations: annotations,
+    drawTime: "afterDatasetsDraw"
+  };
+
   chart.update();
 }
 
