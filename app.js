@@ -263,8 +263,8 @@ function updateChart() {
     label: "Stock MT",
     data: stockValues,
     yAxisID: "yLeft",
-    backgroundColor: "rgba(18,21,28,0.01)",
-    borderColor: "rgba(18,21,28,0.02)",
+    backgroundColor: "rgba(18,21,28,0.005)",
+    borderColor: "rgba(18,21,28,0.005)",
     borderWidth: 1.2,
     barPercentage: 0.55,
     categoryPercentage: 0.85
