@@ -64,9 +64,6 @@ async function fetchData() {
 
     const data = await res.json();
 
-    console.log("STATUS:", res.status);
-    console.log("DATA SAMPLE:", data.slice ? data.slice(0, 5) : data);
-
     if (!res.ok) {
       console.error("Supabase error:", data);
       return;
@@ -187,19 +184,16 @@ function setupChart() {
         x: {
           grid: { display: false }
         },
-
         y: {
           position: "right",
-          grace: "20%",
+          grace: "30%",
           ticks: {
-            callback: v => Number(v).toFixed(2) + " $/lb"
+            callback: v => Number(v).toFixed(2) + " "
           }
         },
-
         yLeft: {
           position: "left",
-          beginAtZero: true,
-          grace: "80%",
+          min: 0,
           grid: {
             drawOnChartArea: false
           },
@@ -242,22 +236,30 @@ function updateChart() {
   chart.data.labels = filtered.map(d => d.fecha);
   chart.data.datasets = [];
 
-  // 🔥 STOCK BARS
+  // ==============================
+  // COLUMNAS STOCK
+  // ==============================
   const stockValues = filtered.map(d => {
     const v = Number(d.stock_MT);
     return isNaN(v) ? null : v;
   });
+
+  const maxStock = Math.max(...stockValues.filter(v => v !== null));
+
+  chart.options.scales.yLeft.min = 0;
+  chart.options.scales.yLeft.max = maxStock * 1.6;
 
   chart.data.datasets.push({
     type: "bar",
     label: "Stock MT",
     data: stockValues,
     yAxisID: "yLeft",
-    backgroundColor: "rgba(18,21,28,0.03)", // MUY TRANSPARENTE
-    borderColor: "rgba(18,21,28,0.6)",
-    borderWidth: 1.3,
-    barPercentage: 0.6,
-    categoryPercentage: 0.9
+    backgroundColor: "rgba(18,21,28,0.035)",
+    borderColor: "rgba(18,21,28,0.45)",
+    borderWidth: 1.2,
+    barPercentage: 0.5,
+    categoryPercentage: 0.7,
+    order: 2
   });
 
   activeColumns.forEach((col, i) => {
