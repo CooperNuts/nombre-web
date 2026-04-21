@@ -196,8 +196,8 @@ function setupChart() {
           grace: "20%",
           ticks: {
             callback: v => {
-              if (v === 0) return "0 $/lb";
-              return Number(v).toFixed(2) + " $/lb";
+              if (v === 0) return "0";
+              return Number(v).toFixed(2) + " ";
             }
           }
         },
@@ -264,7 +264,7 @@ function updateChart() {
     data: stockValues,
     yAxisID: "yLeft",
     backgroundColor: "rgba(18,21,28,0.01)",
-    borderColor: "rgba(18,21,28,0.65)",
+    borderColor: "rgba(18,21,28,0.02)",
     borderWidth: 1.2,
     barPercentage: 0.55,
     categoryPercentage: 0.85
