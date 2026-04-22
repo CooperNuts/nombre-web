@@ -253,7 +253,7 @@ function updateChart() {
     data: stockValues,
     yAxisID: "yLeft",
     backgroundColor: "rgba(18,21,28,0.015)",
-    borderColor: "rgba(18,21,28,0.35)",
+    borderColor: "rgba(18,21,28,0.10)",
     borderWidth: 1.2,
     barPercentage: 0.5,
     categoryPercentage: 0.7,
