@@ -245,7 +245,7 @@ function updateChart() {
   const maxStock = Math.max(...stockValues.filter(v => v !== null));
 
   chart.options.scales.yLeft.min = 0;
-  chart.options.scales.yLeft.max = maxStock * 1.6;
+  chart.options.scales.yLeft.max = maxStock * 2.0;
 
   chart.data.datasets.push({
     type: "bar",
