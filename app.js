@@ -188,6 +188,7 @@ function setupChart() {
           position: "right",
           grace: "30%",
           ticks: {
+            stepSize: 0.10, // 🔥 escala de 0.10
             callback: v => Number(v).toFixed(2)
           }
         },
@@ -198,7 +199,11 @@ function setupChart() {
             drawOnChartArea: false
           },
           ticks: {
-            callback: v => Number(v).toFixed(0) + " MT"
+            stepSize: 100000, // 🔥 saltos de 100.000
+
+            callback: function(value) {
+              // formato con separador de miles
+              return value.toLocaleString('es-ES') + " MT";
           }
         }
       }
