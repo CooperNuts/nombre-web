@@ -184,28 +184,29 @@ function setupChart() {
         x: {
           grid: { display: false }
         },
+
+        // EJE DERECHO (PRECIO)
         y: {
           position: "right",
           grace: "30%",
           ticks: {
-            stepSize: 0.10, // 🔥 escala de 0.10
+            stepSize: 0.10,
             callback: v => Number(v).toFixed(2)
           }
         },
+
+        // EJE IZQUIERDO (STOCK)
         yLeft: {
           position: "left",
           min: 0,
-          max: 1500000,        // 🔥 máximo fijo
-          grace: 0, 
+          max: 1500000,
+          grace: 0,
           grid: {
             drawOnChartArea: false
           },
           ticks: {
-            stepSize: 100000, // 🔥 saltos de 100.000
-
-            callback: function(value) {
-              // formato con separador de miles
-              return value.toLocaleString('es-ES') + " MT";
+            stepSize: 100000,
+            callback: value => value.toLocaleString('es-ES') + " MT"
           }
         }
       }
@@ -248,11 +249,6 @@ function updateChart() {
     const v = Number(d.stock_MT);
     return isNaN(v) ? null : v;
   });
-
-  const maxStock = Math.max(...stockValues.filter(v => v !== null));
-
-  chart.options.scales.yLeft.min = 0;
-  chart.options.scales.yLeft.max = maxStock * 2.0;
 
   chart.data.datasets.push({
     type: "bar",
@@ -332,10 +328,10 @@ function updateChart() {
       yValue: y,
       content: `${h.texto} · ${y.toFixed(2)}`,
       backgroundColor: "rgba(255,255,255,0)",
+      borderWidth: 0,
       color: "#8B0000",
       font: { size: 10 },
-      padding: 6,
-      borderRadius: 4,
+      padding: 4,
       yAdjust: -12
     };
 
