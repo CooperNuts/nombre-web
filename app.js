@@ -331,7 +331,7 @@ function updateChart() {
       xValue: h.fecha,
       yValue: y,
       content: `${h.texto} · ${y.toFixed(2)}`,
-      backgroundColor: "#ffffff",
+      backgroundColor: "rgba(255,255,255,0)",
       color: "#8B0000",
       font: { size: 10 },
       padding: 6,
