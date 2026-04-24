@@ -195,6 +195,8 @@ function setupChart() {
         yLeft: {
           position: "left",
           min: 0,
+          max: 1500000,        // 🔥 máximo fijo
+          grace: 0, 
           grid: {
             drawOnChartArea: false
           },
